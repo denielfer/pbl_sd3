@@ -15,7 +15,7 @@ def tela(request):
     context = {
         "status":s,
         "tempo_espera":t,
-        "last_mensage":a.ultima_mensagem,
+        "last_mensage":a.ultima_mensagem.strftime("%d/%m/%Y, %H:%M:%S"),
     }
 #    print(a)
     return HttpResponse(template.render(context,request))
@@ -40,7 +40,7 @@ def get_update(request):
     a = get_dados()
     response = {
         'status' : a.status,
-        "last_mensage": a.ultima_mensagemstrftime("%d/%m/%Y, %H:%M:%S"),
+        "last_mensage": a.ultima_mensagem.strftime("%d/%m/%Y, %H:%M:%S"),
         "status_code": 200,
     }
     print(response)
