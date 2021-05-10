@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect
 from MQTT import MQTT
 from django.views.decorators.csrf import csrf_exempt
-import analista.py
+from . import analista
 
 def tela(request):
     a = get_dados()

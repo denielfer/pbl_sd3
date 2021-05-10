@@ -1,8 +1,9 @@
 import threading
 from datetime import datetime,timedelta
-from .models import Dados
+from .models import *
 
 def analizador():
+    print("analista iniciado")
     while True:
         a = Dados.objects.all()
         a = a[0]
