@@ -39,6 +39,7 @@ def get_dados():
 
 def get_update(request):
     a = get_dados()
+    print(a)
     response = {
         'status' : a.status,
         "last_mensage": a.ultima_mensagem.strftime("%d/%m/%Y, %H:%M:%S"),

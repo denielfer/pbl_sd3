@@ -75,7 +75,10 @@
         }
 
         $(document).ready(function () {
-            setInterval(check(), 10000);
+            check();
+            setInterval(function (){
+                check();
+            }, 10000);
         });
     </script>
 </body>
