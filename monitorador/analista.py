@@ -1,5 +1,6 @@
 import threading
-from datetime import datetime,timedelta
+from datetime import timedelta
+from django.utils import timezone
 from .models import *
 
 def analizador():
@@ -7,7 +8,7 @@ def analizador():
     while True:
         a = Dados.objects.all()
         a = a[0]
-        if(a.ultima_mensagem + timedelta( seconds=a.tempo_de_espera ) > datetime.now()):
+        if(a.ultima_mensagem + timedelta( seconds=a.tempo_de_espera ) > timezone.now()):
             a.status = "desconectado"
             a.save()
 

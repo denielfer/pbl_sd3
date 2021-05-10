@@ -1,7 +1,7 @@
 #from django.shortcuts import render
 from .models import *
 from django.template import loader
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from MQTT import MQTT
 from django.views.decorators.csrf import csrf_exempt
@@ -36,11 +36,12 @@ def get_dados():
     a = Dados.objects.all()
     return a[0]
 
-def get_update():
+def get_update(request):
     a = get_dados()
-    retorno = {
+    response = {
         'status' : a.status,
-        "last_mensage": a.ultima_mensagem,
+        "last_mensage": a.ultima_mensagemstrftime("%d/%m/%Y, %H:%M:%S"),
+        "status_code": 200,
     }
-    print(retorno)
-    return retorno
+    print(response)
+    return JsonResponse(response,safe=True)
