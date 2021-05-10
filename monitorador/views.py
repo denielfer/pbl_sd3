@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect
 from MQTT import MQTT
 from django.views.decorators.csrf import csrf_exempt
+import analista.py
 
 def tela(request):
     a = get_dados()
@@ -34,3 +35,12 @@ def set_tempo(request):
 def get_dados():
     a = Dados.objects.all()
     return a[0]
+
+def get_update():
+    a = get_dados()
+    retorno = {
+        'status' : a.status,
+        "last_mensage": a.ultima_mensagem,
+    }
+    print(retorno)
+    return retorno
