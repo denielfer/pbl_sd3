@@ -65,7 +65,7 @@
                 url: "/get_update",
                 success: function (response) {
                     console.log(response)
-                    document.getElementById("lastMsg").innerText = "Ultima mensagem as: {{last_mensage}}"
+                    document.getElementById("lastMsg").innerText = "Ultima mensagem as: "+response.last_mensage
                     content(response.status)
                 },
                 error: function (error) {
@@ -75,7 +75,7 @@
         }
 
         $(document).ready(function () {
-            setInterval(check(), 60000);
+            setInterval(check(), 10000);
         });
     </script>
 </body>

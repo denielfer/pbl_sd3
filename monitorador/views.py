@@ -9,12 +9,13 @@ from . import analista
 
 def tela(request):
     a = get_dados()
-    t,s = a.tempo_de_espera,a.status
-    t = f'{int(t/3600):02}:{int((t%3600)/60):02}:{int(t%60):02}'
+    ts,s = a.tempo_de_espera,a.status
+    t = f'{int(ts/3600):02}:{int((ts%3600)/60):02}:{int(ts%60):02}'
     template = loader.get_template("base.html")
     context = {
         "status":s,
         "tempo_espera":t,
+        "tempo_espera_s":ts,
         "last_mensage":a.ultima_mensagem.strftime("%d/%m/%Y, %H:%M:%S"),
     }
 #    print(a)
