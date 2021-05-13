@@ -31,11 +31,35 @@ def __status__(client, userdata, mensage):
     b.save()
     print(type(msg),"  ",msg)
 
-def __iniciar__():
+def __iniciar__(client, userdata, mensage):
     a = Dados.objects.all()
     a = a[0]
     m = {"timer":a.tempo_de_espera}
     publish("set_timer",m)
 
+def __get_status_alexa__(client, userdata, mensage):
+    b = Status.objects.all()[0]
+    m={
+        "Status":b.status
+    }
+    publish("send_status_alexa",m)
+
+def __set_state_alexa__(client, userdata, mensage):
+    a = Dados.objects.all()[0]
+    msg = json.loads(mensage.payload.decode("utf-8"))
+    a.state = msg["estado"]
+    a.save()
+
+def __set_timer_alexa__(client, userdata, mensage):
+    a = Dados.objects.all()[0]
+    msg = json.loads(mensage.payload.decode("utf-8"))
+    a.tempo_de_espera = msg["timer"]
+    a.save()
+    publish("set_timer",msg)
+
+
 subscribe(f'Status',0, __status__)
 subscribe(f'inicia',0, __iniciar__)
+subscribe(f'get_status_alexa',0, __get_status_alexa__)
+subscribe(f'set_state_alexa',0, __set_state_alexa__)
+subscribe(f'set_timer_alexa',0, __set_timer_alexa__)

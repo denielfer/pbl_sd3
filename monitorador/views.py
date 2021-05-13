@@ -18,10 +18,12 @@ def tela(request):
         "tempo_espera":t,
         "tempo_espera_s":ts*500,
         "last_mensage":a.ultima_mensagem.strftime("%d/%m/%Y, %H:%M:%S"),
+        "modo": a.state,
     }
-#    print(a)
+    print(context)
     return HttpResponse(template.render(context,request))
 
+@csrf_exempt
 def set_tempo(request):
     if(request.method == "POST"):
 #        print(request.POST)
@@ -40,6 +42,7 @@ def get_dados():
     b = Status.objects.all()
     return a[0],b[0]
 
+@csrf_exempt
 def get_update(request):
     a,b = get_dados()
 #    print(b.status,"  ",a.ultima_mensagem)
@@ -51,3 +54,15 @@ def get_update(request):
     }
 #    print(response)
     return JsonResponse(response,safe=True)
+
+@csrf_exempt
+def mudar_modo(request):
+    if(request.method == "POST"):
+        a,_ = get_dados()
+        state = (request.POST.get("estado") == "true")
+        print(state)
+        a.state = state
+        a.save()
+        m = { "estado":1 if(state) else 0 }
+        MQTT.publish("set_timer",m)
+    return redirect('monitorador:tela_inicial')

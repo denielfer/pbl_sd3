@@ -154,6 +154,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println();
   if ( strcmp(topic, "set_timer") == 0 ) {
     set_wait_time(doc["timer"]);
+  }else if(strcmp(topic, "set_state") == 0){
+    change_state(doc["estado"]);
   }
 }
 /**
