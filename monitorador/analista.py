@@ -8,12 +8,17 @@ def analizador():
     print("analista iniciado")
     while True:
         a = Dados.objects.all()
-        a = a[0]
-        if(a.ultima_mensagem + timedelta( seconds=a.tempo_de_espera ) < timezone.now()):
-            print(a.ultima_mensagem + timedelta( seconds=a.tempo_de_espera ), timezone.now())
-            print("editado")
-            a.status = "desconectado"
-            a.save()
+        b = Status.objects.all()
+        a,b = a[0],b[0]
+        if(a.ultima_mensagem + timedelta( seconds=a.tempo_de_espera+1 ) < timezone.now()):
+#            print()
+#            print()
+#            print(b.ultima_mensagem + timedelta( seconds=b.tempo_de_espera ), timezone.now())
+#            print("editado")
+#            print()
+#            print()
+            b.status = "desconectado"
+            b.save()
             sleep(int(a.tempo_de_espera/2))
 
 threading.Thread(target=analizador).start()

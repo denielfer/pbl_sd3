@@ -1,5 +1,5 @@
 import AWSIoTPythonSDK.MQTTLib as AWSIoTPyMQTT
-from monitorador.models import Dados
+from monitorador.models import *
 import json
 from django.utils import timezone
 
@@ -23,10 +23,19 @@ def subscribe(topic, qos, callback):
 def __status__(client, userdata, mensage):
     msg = json.loads(mensage.payload.decode("utf-8"))
     a = Dados.objects.all()
-    a = a[0]
-    a.status= msg["estado"]
+    b = Status.objects.all()
+    a,b = a[0],b[0]
+    b.status= msg["estado"]
     a.ultima_mensagem= timezone.now()
     a.save()
+    b.save()
     print(type(msg),"  ",msg)
 
+def __iniciar__():
+    a = Dados.objects.all()
+    a = a[0]
+    m = {"timer":a.tempo_de_espera}
+    publish("set_timer",m)
+
 subscribe(f'Status',0, __status__)
+subscribe(f'inicia',0, __iniciar__)
