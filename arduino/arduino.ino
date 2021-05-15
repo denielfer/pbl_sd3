@@ -75,6 +75,7 @@ void change_state(bool new_state) {
   Serial.print("Estado mudado para: ");
   String s = new_state ? "Alarme" : "Detector de acidente";
   Serial.println(s);
+  new_state ? MQTT.publish("state", "{\"modo\":\"Alarme\"}") : MQTT.publish("state", "{\"modo\":\"Detector de acidente\"}");
   stat_is_alarm = new_state;
 }
 
@@ -155,7 +156,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if ( strcmp(topic, "set_timer") == 0 ) {
     set_wait_time(doc["timer"]);
   }else if(strcmp(topic, "set_state") == 0){
-    change_state(doc["estado"]);
+    change_state(doc["estado"]==1);
   }
 }
 /**
@@ -251,6 +252,7 @@ void setup() {
   //  Serial.println(tempo_obj.getFormattedTime());
   MQTT.publish("inicia", "{}");
   MQTT.publish("Status", "{\"estado\":\"ok\"}");
+  digitalWrite(LED_BUILTIN, HIGH);
 }
 int mensagem_tipo = 0;
 bool was_button_pushed = false, was_save = true, alarm_on = false;
@@ -268,9 +270,13 @@ void loop() {
     // Coloca codigo do botao precionado
     if (!alarm_on) {
       change_state(stat_is_alarm ? false : true);
-      Serial.println("mudando modo operação");
+//      Serial.println("mudando modo operação");
     }
   }
+  old_ace = acelerometro;
+  old_giro = giroscopio;
+  acelerometro = varre_dados_leiura(acelerometro);
+  giroscopio = varre_dados_leiura(giroscopio);
   unsigned long now = tempo_obj.getEpochTime();/*
   Serial.print("x: ");
   Serial.print(acelerometro.x);
@@ -297,11 +303,10 @@ void loop() {
       digitalWrite(LED_BUILTIN, HIGH);
       delay(100);
       if ( was_button_pushed && !was_save) {
-        Serial.print("botao precionado");
+        Serial.println("botao precionado");
         MQTT.publish("Status", "{\"estado\":\"ok\"}");
         last_mensage_time = now;
         alarm_on = false;
-        delay(10000);
         break;
       }
       was_save = was_button_pushed;
@@ -318,16 +323,12 @@ void loop() {
       problema_confirmado();
       alarm_on = false;
       digitalWrite(LED_BUILTIN, LOW);
-      delay(1500);
+      delay(3000);
       digitalWrite(LED_BUILTIN, HIGH);
     }
   }
   was_save = was_button_pushed;
   was_button_pushed = digitalRead(0) == 0 ? true : false;
-  old_ace = acelerometro;
-  old_giro = giroscopio;
-  acelerometro = varre_dados_leiura(acelerometro);
-  giroscopio = varre_dados_leiura(giroscopio);
   if (stat_is_alarm) {
     if (old_ace.x != acelerometro.x || old_ace.y != acelerometro.y || old_ace.z != acelerometro.z) {
       alarm_on = true;
@@ -335,29 +336,25 @@ void loop() {
       Serial.println("roubo detectado");
     }
   } else {
-    if (acelerometro.x > 380 && acelerometro.z < 360) {
+    if (acelerometro.y > 270 && acelerometro.z > 360) {
       problema = "Tombou para a esquerda";
       alarm_on = true;
-      Serial.println("acidente detectado");
-    } else if (acelerometro.x < 270 && acelerometro.z < 360) {
+    } else if (acelerometro.y < 380 && acelerometro.z > 360) {
       problema = "Tombou para a direita";
       alarm_on = true;
-      Serial.println("acidente detectado");
-    } else if (acelerometro.x < 270 && acelerometro.z < 360) {
+    } else if (acelerometro.x < 380 && acelerometro.z > 360) {
       problema = "Tombou para trás";
       alarm_on = true;
-      Serial.println("acidente detectado");
-    } else if (acelerometro.x > 380 && acelerometro.z < 360) {
+    } else if (acelerometro.x > 270 && acelerometro.z > 360) {
       problema = "Tombou para frente";
       alarm_on = true;
-      Serial.println("acidente detectado");
     } else if (acelerometro.z > 360) {
       problema = "Capotado";
       alarm_on = true;
-      Serial.println("acidente detectado");
     } else {
       problema = "";
     }
+    problema != ""? Serial.println(problema):Serial.print(problema);
   }
   if (now > wait_time + last_mensage_time) {
     Serial.println("publicando estatus");
