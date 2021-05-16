@@ -79,42 +79,43 @@
 </head>
 
 <body class="text-center">
-    <div class="content">
+    <div class="content my-4">
         <div class="row">
-            <h2>
-                Detector de colisao
-            </h2>
-            <label class="switch my-3">
-                <input type="checkbox" id="state" {%if modo %} checked {%endif%}>
-                <span class="slider round"></span>
-                <script>
-                    function ligarDesligar(event) {
-                        let estado = document.getElementById('state').checked
-                        console.log(estado)
-                        $.ajax({
-                            type: "POST",
-                            url: "/mudar_modo/",
-                            data: {
-                                "estado": estado
-                            },
-                            error: function(error) {
-                                console.log(error)
-                            }
-                        })
-                    }
-                    $(document).ready(function() {
-                        $("#state").click(ligarDesligar);
-                    });
-                </script>
-            </label>
-            
-            <h2>
-                Alarme
-            </h2>
+            <div class="col-lg-5">
+                <h2>Detector de colisão</h2>
+            </div>
+            <div class="col-lg-2">
+                <label class="switch my-4">
+                    <input type="checkbox" id="state" {%if modo %} checked {%endif%}>
+                    <span class="slider round"></span>
+                    <script>
+                        function ligarDesligar(event) {
+                            let estado = document.getElementById('state').checked
+                            console.log(estado)
+                            $.ajax({
+                                type: "POST",
+                                url: "/mudar_modo/",
+                                data: {
+                                    "estado": estado
+                                },
+                                error: function(error) {
+                                    console.log(error)
+                                }
+                            })
+                        }
+                        $(document).ready(function() {
+                            $("#state").click(ligarDesligar);
+                        });
+                    </script>
+                </label>    
+            </div>
+            <div class="col-lg-5">
+                <h2 class="my-3">Alarme</h2>
+            </div>
         </div>
+        <hr>
         <div>
             <h2>Estado do dispositivo</h2>
-            <br>
             <div style="display: inline-block;">
                 <p id="lastMsg"></p>
                 <img class="status_img" id="img"
@@ -153,7 +154,7 @@
                 url: "/get_update",
                 success: function (response) {
                     console.log(response)
-                    document.getElementById("lastMsg").innerText = "Ultima mensagem as: "+response.last_mensage
+                    document.getElementById("lastMsg").innerText = "Horário da última mensagem: " + response.last_mensage
                     content(response.status)
                     document.getElementById("state").checked = response.state
                 },
