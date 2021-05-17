@@ -195,6 +195,7 @@ void conectar_mqtt() {
       Serial.println("Conectado");
       //se inscrevendo nos topicos que serao constantemente ouvidos pela placa
       MQTT.subscribe("set_timer");
+      MQTT.subscribe("set_state");
     } else {
       Serial.print("Nao conectado, rc=");
       Serial.print(MQTT.state());
@@ -236,13 +237,13 @@ void setup() {
 
   acelerometro = salva_dados_leiura("acelerometro");
   giroscopio = salva_dados_leiura("giroscopio");
-  Serial.print("x: ");
+  Serial.print("acelerometro x: ");
   Serial.print(acelerometro.x);
   Serial.print(" | y: ");
   Serial.print(acelerometro.y);
   Serial.print(" | z: ");
   Serial.println(acelerometro.z);
-  Serial.print("x: ");
+  Serial.print("giroscopio   x: ");
   Serial.print(giroscopio.x);
   Serial.print(" | y: ");
   Serial.print(giroscopio.y);
@@ -254,7 +255,7 @@ void setup() {
   MQTT.publish("Status", "{\"estado\":\"ok\"}");
   digitalWrite(LED_BUILTIN, HIGH);
 }
-int mensagem_tipo = 0;
+int mensagem_tipo = 0,i=0;
 bool was_button_pushed = false, was_save = true, alarm_on = false;
 /**
   É uma função padrao do arduino e sera executada infinitamente apos o setup até o despositivo ser desligado
@@ -273,38 +274,62 @@ void loop() {
 //      Serial.println("mudando modo operação");
     }
   }
-  old_ace = acelerometro;
-  old_giro = giroscopio;
-  acelerometro = varre_dados_leiura(acelerometro);
-  giroscopio = varre_dados_leiura(giroscopio);
-  unsigned long now = tempo_obj.getEpochTime();/*
-  Serial.print("x: ");
+  old_ace = acelerometro; // salvamos o ultimo esta das variaveis acelerometro
+  old_giro = giroscopio; // e giroscopio
+  while (Serial.available() > 0) { // caso exista algo escrito no buffer de entrada
+    String incomingString = Serial.readStringUntil(' ');// lemos esse buffer quebrando a string nos ' '
+    int a = incomingString.toInt(); // transformamos esse valor em int
+    // adepender da variavel i salvamos o x,y,z do acelerometro ou giroscopio
+    if( i==0 ){
+      acelerometro.x = a;
+    }else if( i == 1 ){
+      acelerometro.y = a;
+    }else if( i == 2 ){
+      acelerometro.z = a;
+    }else if( i==3 ){
+      giroscopio.x = a;
+    }else if( i == 4 ){
+      giroscopio.y = a;
+    }else if( i == 5 ){
+      giroscopio.z = a;
+      i = -1;// quando chegamos no z do giroscopio resetamos i pra -1 pq na linha abaixo via soma 1 e ir pra 0
+    }
+    i++;
+  }
+
+
+  Serial.print("acelerometro x: ");
   Serial.print(acelerometro.x);
   Serial.print(" | y: ");
   Serial.print(acelerometro.y);
   Serial.print(" | z: ");
   Serial.println(acelerometro.z);
-  Serial.print("x: ");
+  Serial.print("giroscopio   x: ");
   Serial.print(giroscopio.x);
   Serial.print(" | y: ");
   Serial.print(giroscopio.y);
   Serial.print(" | z: ");
-  Serial.println(giroscopio.z);*/
-  if (alarm_on) {
+  Serial.println(giroscopio.z);
+  
+
+  unsigned long now = tempo_obj.getEpochTime();// verificamos em qual instante estamos
+  if (alarm_on) {// se o alarme estiver ligado
     Serial.println("Alarme ligado");
-    MQTT.publish("Status", "{\"estado\":\"alarme ativado\"}");
-    unsigned long espera = now + 60;
-    while ( now < espera ) {
+    MQTT.publish("Status", "{\"estado\":\"alarme\"}"); // publicamos alarme ligado
+    unsigned long espera = now + 60;// definimos o tempo defaut de espera de 60 segundos para o usuario aperta o botao
+    while ( now < espera ) {// emquanto esperamos caso se desconecte do broker do MQTT vamos reconectar
       if (!MQTT.connected()) {
         conectar_mqtt();
       }
+      //piscamos o led para indicar alarme ligado
       digitalWrite(LED_BUILTIN, LOW);
       delay(100);
       digitalWrite(LED_BUILTIN, HIGH);
       delay(100);
+      //se o botao for apertado quebramos o loop e mudamos a flag do alarme pra falso assim pulando o envio do pedido de socorro
       if ( was_button_pushed && !was_save) {
         Serial.println("botao precionado");
-        MQTT.publish("Status", "{\"estado\":\"ok\"}");
+        MQTT.publish("Status", "{\"estado\":\"ok\"}");// publicamos que esta tudo ok
         last_mensage_time = now;
         alarm_on = false;
         break;
@@ -312,16 +337,17 @@ void loop() {
       was_save = was_button_pushed;
       was_button_pushed = digitalRead(0) == 0 ? true : false;
       now = tempo_obj.getEpochTime();
-      if (now > wait_time + last_mensage_time) {
+      if (now > wait_time + last_mensage_time) {// se em quanto esperamos o tempo do usuario aperta o botao for nescessario envia uma mensagem essa parte fara isso
         MQTT.publish("Status", "{\"estado\":\"alarme\"}");
         last_mensage_time = now;
         Serial.println("publicando alarme ligado");
       }
     }
-    if (alarm_on) {
+    if (alarm_on) {// quando o loop acaba se o usuario nao apertou o botao a flag ainda é true entao "fazemos" a ligação
       Serial.println("Problema confirmado/ botao nao apertado");
-      problema_confirmado();
+      problema_confirmado(); // para publicar problema e salver no historico de eventos
       alarm_on = false;
+      // para indicar a ligação
       digitalWrite(LED_BUILTIN, LOW);
       delay(3000);
       digitalWrite(LED_BUILTIN, HIGH);
@@ -329,20 +355,20 @@ void loop() {
   }
   was_save = was_button_pushed;
   was_button_pushed = digitalRead(0) == 0 ? true : false;
-  if (stat_is_alarm) {
-    if (old_ace.x != acelerometro.x || old_ace.y != acelerometro.y || old_ace.z != acelerometro.z) {
+  if (stat_is_alarm) {// se estivermos no modo de alarme verificamos se os valores do estado antigo é igual ao do novo estado lido
+    if (old_ace.x != acelerometro.x || old_ace.y != acelerometro.y || old_ace.z != acelerometro.z) {// casso os valores sejam diferentes indicamos o roubo, tornando true a flag do alarme
       alarm_on = true;
       problema = "Roubo";
       Serial.println("roubo detectado");
     }
-  } else {
-    if (acelerometro.y > 270 && acelerometro.z > 360) {
-      problema = "Tombou para a esquerda";
+  } else {// caso o modo nao seja o alarme ( sendo assim detecção de acidentes )
+    if (acelerometro.y > 270 && acelerometro.z > 360) {// verificamos se os sensores indicam algum acidente
+      problema = "Tombou para a esquerda"; // caso os sensores indiquem algum acidente o alarme é acionado e é salvo uma indicação de qual o acidente detectado
       alarm_on = true;
-    } else if (acelerometro.y < 380 && acelerometro.z > 360) {
+    } else if (acelerometro.y < 180 && acelerometro.z > 360) {
       problema = "Tombou para a direita";
       alarm_on = true;
-    } else if (acelerometro.x < 380 && acelerometro.z > 360) {
+    } else if (acelerometro.x < 180 && acelerometro.z > 360) {
       problema = "Tombou para trás";
       alarm_on = true;
     } else if (acelerometro.x > 270 && acelerometro.z > 360) {
@@ -356,28 +382,13 @@ void loop() {
     }
     problema != ""? Serial.println(problema):Serial.print(problema);
   }
-  if (now > wait_time + last_mensage_time) {
+  if (now > wait_time + last_mensage_time) {// caso esteja na hora de manda a mensagem pra confirma que a placa esta conectada
     Serial.println("publicando estatus");
-    if ( problema != "") {
+    if ( problema != "") {// se nenhum problema tenha sido identificado publicamos ok
       MQTT.publish("Status", "{\"estado\":\"ok\"}");
-    } else {
+    } else {// se nao publicamos que o alarme esta ligado
       MQTT.publish("Status", "{\"estado\":\"alarme\"}");
     }
       last_mensage_time = now;
   }
 }
-  /*
-    else if(now > wait_time + last_mensage_time){
-    Serial.println("publicado estatus ");
-    last_mensage_time = now;
-    if(mensagem_tipo==0){
-      MQTT.publish("Status","{\"estado\":\"ok\"}");
-      mensagem_tipo++;
-    }else if(mensagem_tipo==1){
-      MQTT.publish("Status","{\"estado\":\"emergencia\"}");
-      mensagem_tipo++;
-    }else{
-      mensagem_tipo=0;
-      MQTT.publish("Status","{\"estado\":\"erro\"}");
-    }
-    }*/
