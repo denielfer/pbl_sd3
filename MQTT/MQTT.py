@@ -63,7 +63,7 @@ def __set_timer_alexa__(client, userdata, mensage):
 def __set_state__(client, userdata, mensage):
     a = Dados.objects.all()[0]
     msg = json.loads(mensage.payload.decode("utf-8"))
-    a.state = msg["modo"]
+    a.state = (msg["modo"] == 0)
     a.save()
     print(f'estado mudado para {a.state}')
 
