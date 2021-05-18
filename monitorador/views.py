@@ -16,7 +16,7 @@ def tela(request):
     context = {
         "status":s,
         "tempo_espera":t,
-        "tempo_espera_s":ts*500,
+        "tempo_espera_s":ts*500 if ts <10 else 5000,
         "last_mensage":a.ultima_mensagem.strftime("%d/%m/%Y, %H:%M:%S"),
         "modo": a.state,
     }

@@ -60,10 +60,12 @@ def __set_timer_alexa__(client, userdata, mensage):
     a.save()
     publish("set_timer",msg)
 
-def __set_state__():
+def __set_state__(client, userdata, mensage):
+    a = Dados.objects.all()[0]
     msg = json.loads(mensage.payload.decode("utf-8"))
-    a.state = state
+    a.state = msg["modo"]
     a.save()
+    print(f'estado mudado para {a.state}')
 
 subscribe(f'Status',0, __status__)
 subscribe(f'inicia',0, __iniciar__)

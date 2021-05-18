@@ -73,9 +73,9 @@ void problema_confirmado() {
 */
 void change_state(bool new_state) {
   Serial.print("Estado mudado para: ");
-  String s = new_state ? "Alarme" : "Detector de acidente";
+  String s = new_state ? "alarme" : "Detector de acidente";
   Serial.println(s);
-  new_state ? MQTT.publish("state", "{\"modo\":\"Alarme\"}") : MQTT.publish("state", "{\"modo\":\"Detector de acidente\"}");
+  new_state ? MQTT.publish("state", "{\"modo\":1}") : MQTT.publish("state", "{\"modo\":0}");
   stat_is_alarm = new_state;
 }
 
@@ -296,8 +296,7 @@ void loop() {
     }
     i++;
   }
-
-
+/*
   Serial.print("acelerometro x: ");
   Serial.print(acelerometro.x);
   Serial.print(" | y: ");
@@ -310,8 +309,7 @@ void loop() {
   Serial.print(giroscopio.y);
   Serial.print(" | z: ");
   Serial.println(giroscopio.z);
-  
-
+  */
   unsigned long now = tempo_obj.getEpochTime();// verificamos em qual instante estamos
   if (alarm_on) {// se o alarme estiver ligado
     Serial.println("Alarme ligado");
@@ -360,6 +358,8 @@ void loop() {
       alarm_on = true;
       problema = "Roubo";
       Serial.println("roubo detectado");
+    }else{
+      problema = "";
     }
   } else {// caso o modo nao seja o alarme ( sendo assim detecção de acidentes )
     if (acelerometro.y > 270 && acelerometro.z > 360) {// verificamos se os sensores indicam algum acidente
@@ -384,7 +384,7 @@ void loop() {
   }
   if (now > wait_time + last_mensage_time) {// caso esteja na hora de manda a mensagem pra confirma que a placa esta conectada
     Serial.println("publicando estatus");
-    if ( problema != "") {// se nenhum problema tenha sido identificado publicamos ok
+    if ( problema == "") {// se nenhum problema tenha sido identificado publicamos ok
       MQTT.publish("Status", "{\"estado\":\"ok\"}");
     } else {// se nao publicamos que o alarme esta ligado
       MQTT.publish("Status", "{\"estado\":\"alarme\"}");
