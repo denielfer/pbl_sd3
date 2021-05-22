@@ -36,14 +36,17 @@ PubSubClient MQTT(AWS_endpoint, 8883, callback, espClient);
 */
 // Variaveis pra o codigo
 
+// variaveis pra guarda o acelerometro e giroscopio e mais 2 para guarda o estado anterior
 dispositivos acelerometro, old_ace;
 dispositivos giroscopio, old_giro;
 
-unsigned long wait_time = 60;
-unsigned long last_mensage_time = 0;
+unsigned long wait_time = 60; // quantos segundos serao esperados para enviar uma nova, por defaut botamos 60 mas no setup recebemos o valor salvo no banco de dados do site
+unsigned long last_mensage_time = 0; // epoch no qual foi enviado a ultima mensagem
 
-bool stat_is_alarm = true;
-String problema = "";
+bool stat_is_alarm = true;// bool pra indicar se estamos no modo de alarme ou de detecção de acidentes
+String problema = ""; // String contendo o problema identificado, "" para nenhum problema
+
+bool arquivo = true; // bool pra indicar qual arquivo deve escrever o historico ( por decisao de equipe sera salvo o historico do dia anterior entao temos 2 arquivos e escrevemos nele alternadamente a cada dia )
 /*
   FUNÇOES
 */
@@ -204,6 +207,24 @@ void conectar_mqtt() {
     }
   }
 }
+
+/*
+  Função que le todo o arquivo passado, printando o conteudo lido
+  @param nome, String sendo o nome do arquivo que sera lido
+*/
+void le_arquivo_full(String nome){
+  File f = SPIFFS.open(nome, "r");
+  Serial.print("tentando ler : ");
+  Serial.println(nome);
+  Serial.println("Conteudo:");
+  while(f.available()){
+    String retorno = f.readStringUntil('\n');
+    Serial.println(retorno);
+  }
+  Serial.println("Fim do conteudo");
+  f.close(); 
+}
+
 /**
   Função padrao do arduino, é executada 1 vez quando o despositivo entra em execução
 **/
@@ -232,12 +253,44 @@ void setup() {
   File ca = SPIFFS.open("/ca.der", "r");
   ca ? Serial.println("AWS CA aberto com sucesso") : Serial.println("AWS CA não foi abertoaberto");
   espClient.loadCACert(ca) ? Serial.println("AWS CA caregado") : Serial.println("AWS CA não carregado");
+  
+  // caregamos do arquivo sys.txt qual arquivo deve ser aberto
+  Serial.println("lendo sys.txt");
+  File sys = SPIFFS.open("sys.txt", "r");
+  if(!sys){// se nao existir criamos e escrevemos 1;
+    Serial.println("sys.txt nao encontrado, criando com valor '1'");  
+    sys = SPIFFS.open("sys.txt", "w");
+    sys.printf("1\n");
+    arquivo = true;
+  }else{// se existir salvamos e lemos qual arquivo deve ser escrito
+    Serial.print("sys.txt encontrado valor lido : ");  
+    String qual_arquivo = sys.readStringUntil('\n');
+    arquivo = ( qual_arquivo == "1" );    
+    Serial.println(arquivo? '1':'0');  
+  }
+  sys.close();
+  Serial.print("Escrevendo encima do arquivo : ");
+  Serial.println(arquivo? "arquivo1.txt":"arquivo2.txt");
+  Serial.println("Conteudo antigo : ");
+  le_arquivo_full(arquivo? "arquivo1.txt":"arquivo2.txt");
+  Serial.println("");
+  File file;
+  // limpamos o arquivo que sera escrito
+  if(arquivo){
+    file = SPIFFS.open("arquivo1.txt", "w");
+  }else{
+    file = SPIFFS.open("arquivo2.txt", "w");
+  }  
+  file.close();
 
+  tempo_obj.begin(); 
+  
   conectar_mqtt();
 
   acelerometro = salva_dados_leiura("acelerometro");
   giroscopio = salva_dados_leiura("giroscopio");
-  Serial.print("acelerometro x: ");
+  /*
+   Serial.print("acelerometro x: ");
   Serial.print(acelerometro.x);
   Serial.print(" | y: ");
   Serial.print(acelerometro.y);
@@ -249,6 +302,7 @@ void setup() {
   Serial.print(giroscopio.y);
   Serial.print(" | z: ");
   Serial.println(giroscopio.z);
+  */
   //  delay(1000000);
   //  Serial.println(tempo_obj.getFormattedTime());
   MQTT.publish("inicia", "{}");
@@ -257,6 +311,35 @@ void setup() {
 }
 int mensagem_tipo = 0,i=0;
 bool was_button_pushed = false, was_save = true, alarm_on = false;
+
+/*
+*  Essa função escreve em 1 dos arquivos de historico, Sendo eles 2 e em qual arquivo escrever é definido pela bool, sendo escrito o instante que a escrita foi feita e a mensagem passada no text
+* @param arquivo, bool indicando qual arquivo deve ser escrito, por decisao de projeto exitem 2 arquivos ( true para "arquivo1.txt" e false para "arquivo2.txt" )
+* @param textm String contendo o texto que sera esrito
+*/
+void escreve_no_arquivo( bool arquivo, String text){
+  File file;
+  if(arquivo){
+    file = SPIFFS.open("arquivo1.txt", "a");
+  }else{
+    file = SPIFFS.open("arquivo2.txt", "a");
+  }
+  
+  String datetime = tempo_obj.getFormattedTime();
+  /*int T_index = datetime.indexOf("T");
+  String day_String = datetime.substring(0, T_index);
+  Serial.print(day_String);
+  Serial.print(" ");*/
+  file.printf("%s %s\n",datetime.c_str(),text.c_str());
+  Serial.print(datetime);
+  Serial.print(" ");
+  Serial.println(text);  
+  file.close();
+}
+
+
+bool day_change = false;
+
 /**
   É uma função padrao do arduino e sera executada infinitamente apos o setup até o despositivo ser desligado
 **/
@@ -266,7 +349,11 @@ void loop() {
     conectar_mqtt();
   }
   MQTT.loop();
-
+  while(!tempo_obj.update()) {
+    tempo_obj.forceUpdate();
+  }
+  was_save = was_button_pushed;
+  was_button_pushed = digitalRead(0) == 0 ? true : false;
   if ( was_button_pushed && !was_save) {
     // Coloca codigo do botao precionado
     if (!alarm_on) {
@@ -277,8 +364,8 @@ void loop() {
   old_ace = acelerometro; // salvamos o ultimo esta das variaveis acelerometro
   old_giro = giroscopio; // e giroscopio
   while (Serial.available() > 0) { // caso exista algo escrito no buffer de entrada
-    String incomingString = Serial.readStringUntil(' ');// lemos esse buffer quebrando a string nos ' '
-    int a = incomingString.toInt(); // transformamos esse valor em int
+    String str = Serial.readStringUntil(' ');// lemos esse buffer quebrando a string nos ' '
+    int a = str.toInt(); // transformamos esse valor em int
     // adepender da variavel i salvamos o x,y,z do acelerometro ou giroscopio
     if( i==0 ){
       acelerometro.x = a;
@@ -311,9 +398,42 @@ void loop() {
   Serial.println(giroscopio.z);
   */
   unsigned long now = tempo_obj.getEpochTime();// verificamos em qual instante estamos
-  if (alarm_on) {// se o alarme estiver ligado
+  was_save = was_button_pushed;
+  was_button_pushed = digitalRead(0) == 0 ? true : false;
+  if (stat_is_alarm) {// se estivermos no modo de alarme verificamos se os valores do estado antigo é igual ao do novo estado lido
+    if (old_ace.x != acelerometro.x || old_ace.y != acelerometro.y || old_ace.z != acelerometro.z) {// casso os valores sejam diferentes indicamos o roubo, tornando true a flag do alarme
+      alarm_on = true;
+      problema = "Roubo";
+      Serial.println("roubo detectado");
+    }else{
+      problema = "";
+    }
+  } else {// caso o modo nao seja o alarme ( sendo assim detecção de acidentes )
+    if (acelerometro.y > 270 && acelerometro.z < 360) {// verificamos se os sensores indicam algum acidente
+      problema = "Tombou para a esquerda"; // caso os sensores indiquem algum acidente o alarme é acionado e é salvo uma indicação de qual o acidente detectado
+      alarm_on = true;
+    } else if (acelerometro.y < 180 && acelerometro.z < 360) {
+      problema = "Tombou para a direita";
+      alarm_on = true;
+    } else if (acelerometro.x < 180 && acelerometro.z < 360) {
+      problema = "Tombou para trás";
+      alarm_on = true;
+    } else if (acelerometro.x > 270 && acelerometro.z < 360) {
+      problema = "Tombou para frente";
+      alarm_on = true;
+    } else if (acelerometro.z < 300) {
+      problema = "Capotado";
+      alarm_on = true;
+    } else {
+      problema = "";
+    }
+    problema != ""? Serial.println(problema):Serial.print(problema);
+  }
+// Se o alarme tiver sido ligado por alguma situação detectada nos sensores
+if (alarm_on) { // se o alarme estiver ligado
     Serial.println("Alarme ligado");
     MQTT.publish("Status", "{\"estado\":\"alarme\"}"); // publicamos alarme ligado
+    escreve_no_arquivo(arquivo, "alarme ligado por : "+problema);
     unsigned long espera = now + 60;// definimos o tempo defaut de espera de 60 segundos para o usuario aperta o botao
     while ( now < espera ) {// emquanto esperamos caso se desconecte do broker do MQTT vamos reconectar
       if (!MQTT.connected()) {
@@ -328,6 +448,7 @@ void loop() {
       if ( was_button_pushed && !was_save) {
         Serial.println("botao precionado");
         MQTT.publish("Status", "{\"estado\":\"ok\"}");// publicamos que esta tudo ok
+        escreve_no_arquivo(arquivo, "botao precionado");
         last_mensage_time = now;
         alarm_on = false;
         break;
@@ -343,6 +464,7 @@ void loop() {
     }
     if (alarm_on) {// quando o loop acaba se o usuario nao apertou o botao a flag ainda é true entao "fazemos" a ligação
       Serial.println("Problema confirmado/ botao nao apertado");
+        escreve_no_arquivo(arquivo, "botao nao precionado precionado, Problema detectado!!!");
       problema_confirmado(); // para publicar problema e salver no historico de eventos
       alarm_on = false;
       // para indicar a ligação
@@ -351,44 +473,34 @@ void loop() {
       digitalWrite(LED_BUILTIN, HIGH);
     }
   }
-  was_save = was_button_pushed;
-  was_button_pushed = digitalRead(0) == 0 ? true : false;
-  if (stat_is_alarm) {// se estivermos no modo de alarme verificamos se os valores do estado antigo é igual ao do novo estado lido
-    if (old_ace.x != acelerometro.x || old_ace.y != acelerometro.y || old_ace.z != acelerometro.z) {// casso os valores sejam diferentes indicamos o roubo, tornando true a flag do alarme
-      alarm_on = true;
-      problema = "Roubo";
-      Serial.println("roubo detectado");
-    }else{
-      problema = "";
-    }
-  } else {// caso o modo nao seja o alarme ( sendo assim detecção de acidentes )
-    if (acelerometro.y > 270 && acelerometro.z > 360) {// verificamos se os sensores indicam algum acidente
-      problema = "Tombou para a esquerda"; // caso os sensores indiquem algum acidente o alarme é acionado e é salvo uma indicação de qual o acidente detectado
-      alarm_on = true;
-    } else if (acelerometro.y < 180 && acelerometro.z > 360) {
-      problema = "Tombou para a direita";
-      alarm_on = true;
-    } else if (acelerometro.x < 180 && acelerometro.z > 360) {
-      problema = "Tombou para trás";
-      alarm_on = true;
-    } else if (acelerometro.x > 270 && acelerometro.z > 360) {
-      problema = "Tombou para frente";
-      alarm_on = true;
-    } else if (acelerometro.z > 360) {
-      problema = "Capotado";
-      alarm_on = true;
-    } else {
-      problema = "";
-    }
-    problema != ""? Serial.println(problema):Serial.print(problema);
-  }
+  
   if (now > wait_time + last_mensage_time) {// caso esteja na hora de manda a mensagem pra confirma que a placa esta conectada
     Serial.println("publicando estatus");
     if ( problema == "") {// se nenhum problema tenha sido identificado publicamos ok
       MQTT.publish("Status", "{\"estado\":\"ok\"}");
     } else {// se nao publicamos que o alarme esta ligado
       MQTT.publish("Status", "{\"estado\":\"alarme\"}");
+        escreve_no_arquivo(arquivo, problema);
     }
       last_mensage_time = now;
   }
+  if( tempo_obj.getFormattedTime() == "00:00:00" && day_change ){
+    arquivo = !arquivo;
+    day_change = !day_change;
+    File sys = SPIFFS.open("sys.txt", "w");
+    sys.printf("%d\n",arquivo);
+    sys.close();
+    // fazemos isso pro caso do arquivo nao ter sido criado ainda
+    File file;
+    // limpamos o arquivo que sera escrito
+    if(arquivo){
+      file = SPIFFS.open("arquivo1.txt", "w");
+    }else{
+      file = SPIFFS.open("arquivo2.txt", "w");
+    }  
+    file.close();
+  }else if( tempo_obj.getFormattedTime() == "00:00:10" && !day_change ){
+    day_change = !day_change;
+  }
+  //le_arquivo_full( arquivo? "arquivo1.txt":"arquivo2.txt" );
 }
