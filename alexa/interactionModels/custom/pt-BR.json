@@ -1,0 +1,93 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "iniciar monitoramento do sensor",
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": [
+            "alexa ajuda",
+            "alexa mais informações",
+            "mais informações",
+            "help",
+            "me ajude",
+            "ajuda",
+            "alexa me ajude"
+          ]
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": [
+            "finalizar",
+            "goodbye",
+            "até mais",
+            "terminate",
+            "tchau"
+          ]
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "HelloWorldIntent",
+          "slots": [],
+          "samples": [
+            "olá",
+            "como vai você",
+            "diga oi mundo",
+            "diga oi",
+            "oi",
+            "diga olá mundo",
+            "diga olá"
+          ]
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        },
+        {
+          "name": "set_state_Intent",
+          "slots": [],
+          "samples": [
+            "alexa inverter modo de operação",
+            "inverter estado de operação",
+            "alexa inverter estado de operação",
+            "mudar modo de operação",
+            "alexa mudar modo de operação"
+          ]
+        },
+        {
+          "name": "get_status_Intent",
+          "slots": [],
+          "samples": [
+            "alexa me informe sobre o estado do dispositivo",
+            "informações sobre dispositivo",
+            "qual estado do sensor",
+            "alexa qual o estado do sensor"
+          ]
+        },
+        {
+          "name": "set_time_Intent",
+          "slots": [
+            {
+              "name": "tempo",
+              "type": "AMAZON.NUMBER"
+            }
+          ],
+          "samples": [
+            "definir tempo de espera para {tempo} minutos",
+            "definir tempo de espera para {tempo}",
+            "alexa definir tempo de espera para {tempo}"
+          ]
+        }
+      ],
+      "types": []
+    }
+  },
+  "version": "3"
+}
