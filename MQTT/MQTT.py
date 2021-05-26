@@ -52,6 +52,8 @@ def __set_state_alexa__(client, userdata, mensage):
     msg = json.loads(mensage.payload.decode("utf-8"))
     a.state = msg["estado"]
     a.save()
+    m = { "estado":1 if(a.state) else 0 }
+    publish("set_state",m)
 
 def __set_timer_alexa__(client, userdata, mensage):
     a = Dados.objects.all()[0]
