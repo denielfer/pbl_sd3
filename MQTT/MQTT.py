@@ -2,14 +2,15 @@ import AWSIoTPythonSDK.MQTTLib as AWSIoTPyMQTT
 from monitorador.models import *
 import json
 from django.utils import timezone
+from os import getcwd
 
 client = AWSIoTPyMQTT.AWSIoTMQTTClient("meu_client")
-#C:\\Users\\dfc15\\Desktop\\materias\\SD\\Problema-3\\pbl_sd3\\monitoramento\\MQTT\\certificados\\
 #/home/ubuntu/sd_pbl2/IoT/
+pwd = getcwd()
 client.configureEndpoint("a1hhzdnhqam0eu-ats.iot.us-east-1.amazonaws.com", 8883)
-client.configureCredentials("C:\\Users\\dfc15\\Desktop\\materias\\SD\\Problema-3\\pbl_sd3\\monitoramento\\MQTT\\certificados\\AmazonRootCA1.pem", 
-                            "C:\\Users\\dfc15\\Desktop\\materias\\SD\\Problema-3\\pbl_sd3\\monitoramento\\MQTT\\certificados\\a504e91ba6-private.pem.key",
-                            "C:\\Users\\dfc15\\Desktop\\materias\\SD\\Problema-3\\pbl_sd3\\monitoramento\\MQTT\\certificados\\a504e91ba6-certificate.pem.crt")
+client.configureCredentials(f"{pwd}\\MQTT\\certificados\\AmazonRootCA1.pem", 
+                            f"{pwd}\\MQTT\\certificados\\a504e91ba6-private.pem.key",
+                            f"{pwd}\\MQTT\\certificados\\a504e91ba6-certificate.pem.crt")
 
 client.connect()
 #print("Client Connected")
