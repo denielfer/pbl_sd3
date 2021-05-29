@@ -34,7 +34,7 @@ class LaunchRequestHandler(AbstractRequestHandler):
         MQTT.iniciar()
         MQTT.conectar()
         MQTT.subs()
-        speak_output = "Bem vindo aqui você consegue informações sobre o dispositivo. fale 'alexa me ajude' para mais informações"
+        speak_output = "Bem vindo, aqui você consegue informações sobre o dispositivo. Fale 'alexa me ajude' para mais informações"
 
         return (
             handler_input.response_builder
@@ -71,8 +71,9 @@ class HelpIntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speak_output = "Voce pode falar 'inverter estado de operação', para alterar o modo de operação do sensor. Ou 'alexa me informe sobre o estado do dispositivo' para obter informações sobre o estado do dispositvo. Ou 'definir tempo de espera para ' e dizer um numero para nos definirmos esse valor como tempo de espera, lembre que esse tempo sera em minutos e deve ser maior que 1. Para finalizar diga 'adeus'"
-        r2 = "posso ajudar em mais alguma coisa?"
+        #Voce pode falar 'inverter estado de operação', para alterar o modo de operação do sensor. Ou 'alexa me informe sobre o estado do dispositivo' para obter informações sobre o estado do dispositvo. Ou 'definir tempo de espera para ' e dizer um numero para nos definirmos esse valor como tempo de espera, lembre que esse tempo sera em minutos e deve ser maior que 1. Para finalizar diga 'adeus'
+        speak_output = "Olá, você pode inverter o estado de operação do sensor, requisitar informações sobre o estado do dispositivo, ou definir o tempo de espera do dispositivo. Lembre que esse tempo será em minutos, e deve ser maior que 1. Para finalizar diga 'adeus'"
+        r2 = "Posso ajudar em mais alguma coisa?"
         return (
             handler_input.response_builder
                 .speak(speak_output)
@@ -90,7 +91,7 @@ class CancelOrStopIntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speak_output = "Goodbye!"
+        speak_output = "Até mais!"
 
         return (
             handler_input.response_builder
@@ -107,8 +108,8 @@ class FallbackIntentHandler(AbstractRequestHandler):
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
         logger.info("In FallbackIntentHandler")
-        speech = "Hmm, I'm not sure. You can say Hello or Help. What would you like to do?"
-        reprompt = "I didn't catch that. What can I help you with?"
+        speech = "Hmmm, acho que eu não entendi essa. Você pode inverter o estado de operação do sensor, requisitar informações sobre o estado do dispositivo, ou definir o tempo de espera do dispositivo. Lembre que esse tempo será em minutos, e deve ser maior que 1. Para finalizar diga 'adeus'"
+        reprompt = "Desculpe eu não consegui entender, no que eu posso te ajudar?"
 
         return handler_input.response_builder.speak(speech).ask(reprompt).response
 
@@ -139,7 +140,7 @@ class IntentReflectorHandler(AbstractRequestHandler):
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
         intent_name = ask_utils.get_intent_name(handler_input)
-        speak_output = "You just triggered " + intent_name + "."
+        speak_output = "você ativou " + intent_name + "."
 
         return (
             handler_input.response_builder
@@ -162,7 +163,7 @@ class CatchAllExceptionHandler(AbstractExceptionHandler):
         # type: (HandlerInput, Exception) -> Response
         logger.error(exception, exc_info=True)
 
-        speak_output = "Sorry, I had trouble doing what you asked. Please try again."
+        speak_output = "Desculpe, eu tive um problema fazendo o que você pediu, por favor tente novamente."
 
         return (
             handler_input.response_builder
@@ -182,13 +183,13 @@ class set_time_IntentHandler(AbstractRequestHandler):
         # type: (HandlerInput) -> Response
         tempo = handler_input.request_envelope.request.intent.slots['tempo'].value
         if(tempo == None):
-            speak_output = f"Nao foi poscivel entender o numero informado por favor tente dinovo."
+            speak_output = f"Nao foi possível entender o numero informado, por favor tente de novo."
         else:
             tempo = int(tempo)
             if(tempo < 1):
-                speak_output = f"o tempo informado deve ser maior que 1 e um numero inteiro. por favor tente novamente"
+                speak_output = f"O tempo informado deve ser maior que 1, e tem que ser um número inteiro. por favor tente novamente"
             else:
-                speak_output = f"o tempo de tolerencia de conexao foi definido para {tempo}"
+                speak_output = f"o tempo de tolerância de conexão foi definido para {tempo}"
                 MQTT.publish("set_timer_alexa",{"timer":tempo*60})
         return ( handler_input.response_builder.speak(speak_output).ask(speak_output).response )
 
@@ -204,7 +205,7 @@ class get_status_IntentHandler(AbstractRequestHandler):
         MQTT.publish("get_status_alexa",{})
         while(not(MQTT.flag)):
             pass
-        speak_output = f'O estado do dispositivo é {MQTT.status} e esta no modo {MQTT.state}'
+        speak_output = f'O estado do dispositivo é {MQTT.status}, e está no modo {MQTT.state}'
         r2 = "Deseja mais alguma coisa?"
         return (
             handler_input.response_builder
