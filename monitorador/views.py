@@ -50,8 +50,7 @@ def get_update(request):
     response = {
         'status' : b.status,
         "last_mensage": a.ultima_mensagem.strftime("%d/%m/%Y, %H:%M:%S"),
-        "state": a.state,
-        "status_code": 200,
+        "state": a.state
     }
 #    print(response)
     return JsonResponse(response,safe=True)

@@ -42,18 +42,22 @@ def __iniciar__(client, userdata, mensage):
     print(m)
 
 def __get_status_alexa__(client, userdata, mensage):
+    print("Chegou request da alexa pra obter informações de status e state")
     b = Status.objects.all()[0]
+    a = Dados.objects.all()[0]
     m={
         "status":b.status,
-        "state":"Alarme" if b.state else "Detector de acidentes"
+        "state":"Alarme" if a.state else "Detector de acidentes"
     }
     publish("send_status_alexa",m)
 
 def __set_state_alexa__(client, userdata, mensage):
+    print("Chegou mensagem da alexa pra seta State")
     msg = json.loads(mensage.payload.decode("utf-8"))
     publish("set_state",msg)
 
 def __set_timer_alexa__(client, userdata, mensage):
+    print("Chegou mensagem da alexa pra seta tempo")
     a = Dados.objects.all()[0]
     msg = json.loads(mensage.payload.decode("utf-8"))
     a.tempo_de_espera = msg["timer"]
@@ -63,7 +67,7 @@ def __set_timer_alexa__(client, userdata, mensage):
 def __set_state__(client, userdata, mensage):
     a = Dados.objects.all()[0]
     msg = json.loads(mensage.payload.decode("utf-8"))
-    a.state = (msg["modo"] == 0)
+    a.state = (msg["modo"] == 1)
     a.save()
     print(f'estado mudado para {a.state}')
 
