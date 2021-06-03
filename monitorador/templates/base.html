@@ -153,7 +153,7 @@
                 type: "GET",
                 url: "/get_update",
                 success: function (response) {
-                    console.log(response)
+                    //console.log(response)
                     document.getElementById("lastMsg").innerText = "Horário da última mensagem: " + response.last_mensage
                     content(response.status)
                     document.getElementById("state").checked = response.state

@@ -29,6 +29,7 @@ def set_tempo(request):
 #        print(request.POST)
         a,b = get_dados()
         t = request.POST.get("tempo")
+        t = str(t)
         t = int(t[0:2])*3600+int(t[3:5])*60+int(t[6:8])
         a.tempo_de_espera = t
         a.save()
