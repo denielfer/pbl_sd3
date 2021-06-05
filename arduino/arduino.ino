@@ -113,11 +113,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
     set_wait_time(doc["timer"]);
   } else if (strcmp(topic, "set_state") == 0) {
     change_state(doc["estado"] == 1);
-  } /*else if (strcmp(topic, "set_state_alexa") == 0) {
-    MQTT.publish("set_state_alexa_p", );
   } else if (strcmp(topic, "set_timer_alexa") == 0) {
-    MQTT.publish("set_timer_alexa_p", "{\"timer\":doc[tempo]*60}");
-  }*/
+    char msg[length];
+    for(int a = 0; a < length; a++){
+      msg[a]=char(payload[a]);
+    }
+    MQTT.publish("set_timer_alexa_p", msg);
+  }
 }
 /**
   Este procedimento é responsavel por realizar a conecção com o wifi
@@ -156,6 +158,7 @@ void conectar_mqtt() {
       //se inscrevendo nos topicos que serao constantemente ouvidos pela placa
       MQTT.subscribe("set_timer");
       MQTT.subscribe("set_state");
+      MQTT.subscribe("set_timer_alexa");
     } else {
       Serial.print("Nao conectado, rc=");
       Serial.print(MQTT.state());

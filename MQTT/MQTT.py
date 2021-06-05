@@ -8,9 +8,9 @@ client = AWSIoTPyMQTT.AWSIoTMQTTClient("meu_client")
 #/home/ubuntu/sd_pbl2/IoT/
 pwd = getcwd()
 client.configureEndpoint("a1hhzdnhqam0eu-ats.iot.us-east-1.amazonaws.com", 8883)
-client.configureCredentials(f"{pwd}\\MQTT\\certificados\\AmazonRootCA1.pem", 
-                            f"{pwd}\\MQTT\\certificados\\a504e91ba6-private.pem.key",
-                            f"{pwd}\\MQTT\\certificados\\a504e91ba6-certificate.pem.crt")
+client.configureCredentials(f"{pwd}/MQTT/certificados/AmazonRootCA1.pem", 
+                            f"{pwd}/MQTT/certificados/a504e91ba6-private.pem.key",
+                            f"{pwd}/MQTT/certificados/a504e91ba6-certificate.pem.crt")
 
 client.connect()
 #print("Client Connected")
@@ -73,7 +73,5 @@ def __set_state__(client, userdata, mensage):
 
 subscribe(f'Status',0, __status__)
 subscribe(f'inicia',0, __iniciar__)
-subscribe(f'get_status_alexa',0, __get_status_alexa__)
-subscribe(f'set_state_alexa',0, __set_state_alexa__)
-subscribe(f'set_timer_alexa',0, __set_timer_alexa__)
+subscribe(f'set_timer_alexa_p',0, __set_timer_alexa__)
 subscribe(f'state',0, __set_state__)
