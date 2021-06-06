@@ -82,6 +82,7 @@ void change_state(bool new_state) {
   String s = new_state ? "alarme" : "Detector de acidente";
   Serial.println(s);
   new_state ? MQTT.publish("state", "{\"modo\":1}") : MQTT.publish("state", "{\"modo\":0}");
+  delay(100);
   stat_is_alarm = new_state;
 }
 

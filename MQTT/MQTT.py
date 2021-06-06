@@ -8,9 +8,9 @@ client = AWSIoTPyMQTT.AWSIoTMQTTClient("meu_client")
 #/home/ubuntu/sd_pbl2/IoT/
 pwd = getcwd()
 client.configureEndpoint("a1hhzdnhqam0eu-ats.iot.us-east-1.amazonaws.com", 8883)
-client.configureCredentials(f"{pwd}/MQTT/certificados/AmazonRootCA_site.pem", 
-                            f"{pwd}/MQTT/certificados/f1a9b69ac4-private.pem.key",
-                            f"{pwd}/MQTT/certificados/f1a9b69ac4-certificate.pem.crt")
+client.configureCredentials(f"{pwd}\\MQTT\\certificados\\AmazonRootCA_site.pem", 
+                            f"{pwd}\\MQTT\\certificados\\f1a9b69ac4-private.pem.key",
+                            f"{pwd}\\MQTT\\certificados\\f1a9b69ac4-certificate.pem.crt")
 
 client.connect()
 #print("Client Connected")
