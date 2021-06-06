@@ -25,7 +25,8 @@ cur = cur[0]
 a = cur[1]
 b = cur[2]
 c = cur[3]
-cur.commit()
+conn.commit()
+
 print(f"datetime: {a}\t tempo espera:{b},\t is_alarme:{c}")
 
 def tela(request):
