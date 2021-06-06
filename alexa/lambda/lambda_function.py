@@ -14,12 +14,40 @@ from ask_sdk_core.handler_input import HandlerInput
 
 from ask_sdk_model import Response
 
-import MQTT
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+import MQTT
+import requests
+#import psycopg2
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+#try:
+#    conn = psycopg2.connect(
+#                host="database-3.ckpzpfrz5rnt.us-east-1.rds.amazonaws.com",
+#                database="DB1",
+#                user="dfc152",
+#                password="senha123")
+except:
+    pass
+ipv4 = "HTTP://18.234.162.35"
+status = "Desconectado"
+state  = "desconhecido"
+
+def __pedir_mensagem__():
+    try:
+        r = requests.get(f'{ipv4}/get_update/', timeout=1)
+        if(r.status_code == 200):
+            r = r.json()
+            status = "Conectado" if(r["status"] == "ok") else "Alarme ligado" if(r["status"] == "alarme")  else "Desconectado"
+            state  = "Alarme" if (r["state"]) else "Detector de acidentes"
+        else:
+            status = "Desconectado"
+            state = "desconhecido"
+    except:
+        pass
 
 
 class LaunchRequestHandler(AbstractRequestHandler):
@@ -32,9 +60,8 @@ class LaunchRequestHandler(AbstractRequestHandler):
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
         MQTT.iniciar()
-        MQTT.conectar()
-        MQTT.subs()
-        speak_output = "Bem vindo, aqui você consegue informações sobre o dispositivo. Fale 'alexa me ajude' para mais informações"
+        __pedir_mensagem__()
+        speak_output = f"Bem vindo, aqui você consegue informações sobre o dispositivo. Fale 'alexa me ajude' para mais informações {status} {state}"
 
         return (
             handler_input.response_builder
@@ -181,16 +208,22 @@ class set_time_IntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        tempo = handler_input.request_envelope.request.intent.slots['tempo'].value
-        if(tempo == None):
-            speak_output = f"Nao foi possível entender o numero informado, por favor tente de novo."
+        #if(status == "Desconectado"):
+        if(False):
+            speak_output = "Operação não pode ser realizada pois não foi possivel se conectar com a placa"
         else:
-            tempo = int(tempo)
-            if(tempo < 1):
-                speak_output = f"O tempo informado deve ser maior que 1, e tem que ser um número inteiro. por favor tente novamente"
+            tempo = handler_input.request_envelope.request.intent.slots['tempo'].value
+            if(tempo == None):
+                speak_output = f"Não foi possível entender o numero informado, por favor tente de novo."
             else:
-                speak_output = f"o tempo de tolerância de conexão foi definido para {tempo}"
-                MQTT.publish("set_timer_alexa",{"timer":tempo*60})
+                tempo = int(tempo)
+                if(tempo < 1):
+                    speak_output = f"O tempo informado deve ser maior que 1, e tem que ser um número inteiro. por favor tente novamente"
+                else:
+                    speak_output = f"o tempo de tolerância de conexão foi definido para {tempo}"
+                    MQTT.publish("set_timer_alexa",{"timer":tempo*60})
+                    cur = conn.cursor()
+                    cur.execute("""SELECT tempo_de_espera from Dados""")
         return ( handler_input.response_builder.speak(speak_output).ask(speak_output).response )
 
 
@@ -201,11 +234,12 @@ class get_status_IntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        MQTT.flag = True
-        MQTT.publish("get_status_alexa",{})
-        while(not(MQTT.flag)):
-            pass
-        speak_output = f'O estado do dispositivo é {MQTT.status}, e está no modo {MQTT.state}'
+        MQTT.conectar()
+        __pedir_mensagem__()
+        if(status == "Desconectado"):
+            speak_output = "Operação não pode ser realizada pois não foi possivel se conectar com a placa"
+        else:
+            speak_output = f'O estado do dispositivo é {MQTT.status}, e está no modo {MQTT.state}'
         r2 = "Deseja mais alguma coisa?"
         return (
             handler_input.response_builder
@@ -221,8 +255,14 @@ class set_state_IntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        MQTT.publish("set_state_alexa", {"estado": 0 if (MQTT.state == "Alarme") else 1})
-        speak_output = f'O modo de operação do dispositivo foi alterado'
+        MQTT.conectar()
+        __pedir_mensagem__()
+        #if(status == "Desconectado"):
+        if(False):
+            speak_output = "Operação não pode ser realizada pois não foi possivel se conectar com a placa"
+        else:
+            MQTT.publish("set_state", {"estado": 0 if (MQTT.state == "Alarme") else 1})
+            speak_output = f'O modo de operação do dispositivo foi alterado'
         r2 = "Deseja mais alguma coisa?"
         return (
             handler_input.response_builder

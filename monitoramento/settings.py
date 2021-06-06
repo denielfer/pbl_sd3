@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
-from os import getcwd
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -77,15 +76,23 @@ WSGI_APPLICATION = 'monitoramento.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'DB1',
+        'USER': 'dfc152',
+        'PASSWORD': 'senha123',
+        'HOST': 'database-3.ckpzpfrz5rnt.us-east-1.rds.amazonaws.com',
+        'PORT': '5432',
+#        'ENGINE': 'django.db.backends.sqlite3',
+#        'NAME': BASE_DIR / 'db.sqlite3',
     },
-    "DB1": {
-        'ENGINE':'django.db.backends.mysql',
-        'OPTIONS': {
-            'read_default_file': f'/{getcwd()}\\my.cnf',
-        },
-    }
+#    "DB1": {
+#        'ENGINE': 'django.db.backends.postgresql',
+#        'NAME': 'DB1',
+#        'USER': 'dfc152',
+#        'PASSWORD': 'senha123',
+#        'HOST': 'database-1.ckpzpfrz5rnt.us-east-1.rds.amazonaws.com',
+#        'PORT': '5432',
+#    }
 }
 
 
