@@ -3,10 +3,10 @@ from .models import *
 from django.template import loader
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect
-from MQTT import MQTT
+#from MQTT import MQTT
 from datetime import timedelta
 from django.views.decorators.csrf import csrf_exempt
-from . import analista
+#from . import analista
 
 def tela(request):
     a,b = get_dados()

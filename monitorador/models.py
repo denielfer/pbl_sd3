@@ -8,3 +8,6 @@ class Dados(models.Model):
 
 class Status(models.Model):
     status = models.CharField(max_length=100)
+
+class test(models.Model):
+    str = models.CharField(max_length=100)
