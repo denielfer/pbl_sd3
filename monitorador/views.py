@@ -59,7 +59,6 @@ def get_update(request):
 @csrf_exempt
 def mudar_modo(request):
     if(request.method == "POST"):
-        a,_ = get_dados()
         state = (request.POST.get("estado") == "true")
         #print(state)
 #        a.state = state

@@ -17,8 +17,9 @@ def analizador():
 #            print("editado")
 #            print()
 #            print()
-            b.status = "desconectado"
-            b.save()
+            if(b.status != "desconectado"):
+                b.status = "desconectado"
+                b.save()
             sleep(int(a.tempo_de_espera/2))
 
 threading.Thread(target=analizador).start()

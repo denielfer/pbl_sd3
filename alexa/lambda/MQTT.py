@@ -14,9 +14,9 @@ def subscribe(topic, qos, callback):
 
 def iniciar():
     client.configureEndpoint("a1hhzdnhqam0eu-ats.iot.us-east-1.amazonaws.com", 8883)
-    client.configureCredentials("AmazonRootCA1.pem", 
-                                "a504e91ba6-private.pem.key",
-                                "a504e91ba6-certificate.pem.crt")
+    client.configureCredentials("AmazonRootCA.pem", 
+                                "665e74a714-private.pem.key",
+                                "665e74a714-certificate.pem.crt")
 
 def conectar():
     client.connect()
