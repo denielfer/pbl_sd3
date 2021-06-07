@@ -29,7 +29,7 @@ def __status__(client, userdata, mensage):
     a,b = a[0],b[0]
     b.status= msg["estado"]
     if(msg["should_update"]):
-        a.tempo_de_espera = msg["tempo"]
+        a.tempo_de_espera = msg["tempo"]+1
         a.state = msg["modo"]
     a.ultima_mensagem= timezone.now()
     a.save()
