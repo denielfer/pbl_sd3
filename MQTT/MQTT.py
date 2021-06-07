@@ -27,42 +27,25 @@ def __status__(client, userdata, mensage):
     b = Status.objects.all()
     a,b = a[0],b[0]
     b.status= msg["estado"]
+    if(msg["should_update"] == "false"):
+        a.tempo_de_espera = msg["tempo"]
+        a.state = msg["modo"]=="true"
     a.ultima_mensagem= timezone.now()
     a.save()
     b.save()
+    m = {"estado":1 if a.state else 0,"is_not_site":0}
+    publish("set_state",m)
+    
     #print(type(msg),"  ",msg)
 
 def __iniciar__(client, userdata, mensage):
     a = Dados.objects.all()
     a = a[0]
-    m = {"timer":a.tempo_de_espera}
+    m = {"timer":a.tempo_de_espera,"is_not_site":0}
     publish("set_timer",m)
-    m = {"estado":1 if a.state else 0}
+    m = {"estado":1 if a.state else 0,"is_not_site":0}
     publish("set_state",m)
     print(m)
-
-def __get_status_alexa__(client, userdata, mensage):
-    print("Chegou request da alexa pra obter informações de status e state")
-    b = Status.objects.all()[0]
-    a = Dados.objects.all()[0]
-    m={
-        "status":b.status,
-        "state":"Alarme" if a.state else "Detector de acidentes"
-    }
-    publish("send_status_alexa",m)
-
-def __set_state_alexa__(client, userdata, mensage):
-    print("Chegou mensagem da alexa pra seta State")
-    msg = json.loads(mensage.payload.decode("utf-8"))
-    publish("set_state",msg)
-
-def __set_timer_alexa__(client, userdata, mensage):
-    print("Chegou mensagem da alexa pra seta tempo")
-    a = Dados.objects.all()[0]
-    msg = json.loads(mensage.payload.decode("utf-8"))
-    a.tempo_de_espera = msg["timer"]
-    a.save()
-    publish("set_timer",msg)
 
 def __set_state__(client, userdata, mensage):
     a = Dados.objects.all()[0]
@@ -73,5 +56,4 @@ def __set_state__(client, userdata, mensage):
 
 subscribe(f'Status',0, __status__)
 subscribe(f'inicia',0, __iniciar__)
-subscribe(f'set_timer_alexa_p',0, __set_timer_alexa__)
 subscribe(f'state',0, __set_state__)
