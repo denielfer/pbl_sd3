@@ -76,14 +76,14 @@ WSGI_APPLICATION = 'monitoramento.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'DB1',
-        'USER': 'dfc152',
-        'PASSWORD': 'senha123',
-        'HOST': 'database-3.ckpzpfrz5rnt.us-east-1.rds.amazonaws.com',
-        'PORT': '5432',
-#        'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': BASE_DIR / 'db.sqlite3',
+        # 'ENGINE': 'django.db.backends.postgresql',
+        # 'NAME': 'DB1',
+        # 'USER': 'dfc152',
+        # 'PASSWORD': 'senha123',
+        # 'HOST': 'database-3.ckpzpfrz5rnt.us-east-1.rds.amazonaws.com',
+        # 'PORT': '5432',
+       'ENGINE': 'django.db.backends.sqlite3',
+       'NAME': BASE_DIR / 'db.sqlite3',
     },
 #    "DB1": {
 #        'ENGINE': 'django.db.backends.postgresql',
