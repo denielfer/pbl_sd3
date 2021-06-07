@@ -23,13 +23,14 @@ def subscribe(topic, qos, callback):
 
 def __status__(client, userdata, mensage):
     msg = json.loads(mensage.payload.decode("utf-8"))
+    print(msg)
     a = Dados.objects.all()
     b = Status.objects.all()
     a,b = a[0],b[0]
     b.status= msg["estado"]
-    if(msg["should_update"] == "false"):
+    if(msg["should_update"]):
         a.tempo_de_espera = msg["tempo"]
-        a.state = msg["modo"]=="true"
+        a.state = msg["modo"]
     a.ultima_mensagem= timezone.now()
     a.save()
     b.save()

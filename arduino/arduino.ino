@@ -36,10 +36,8 @@ PubSubClient MQTT(AWS_endpoint, 8883, callback, espClient);
   SETUP VARIAVEIS GLOBAIS
 */
 // Variaveis pra o codigo
-
-// variaveis pra guarda o acelerometro e giroscopio e mais 2 para guarda o estado anterior
-dispositivos acelerometro, old_ace;
-dispositivos giroscopio;
+unsigned int now = tempo_obj.getEpochTime();
+bool should_update = false;
 
 unsigned long wait_time = 60; // quantos segundos serao esperados para enviar uma nova, por defaut botamos 60 mas no setup recebemos o valor salvo no banco de dados do site
 unsigned long last_mensage_time = 0; // epoch no qual foi enviado a ultima mensagem
@@ -48,9 +46,39 @@ bool stat_is_alarm = true;// bool pra indicar se estamos no modo de alarme ou de
 String problema = ""; // String contendo o problema identificado, "" para nenhum problema
 
 bool arquivo = true; // bool pra indicar qual arquivo deve escrever o historico ( por decisao de equipe sera salvo o historico do dia anterior entao temos 2 arquivos e escrevemos nele alternadamente a cada dia )
+
+
+// variaveis pra guarda o acelerometro e giroscopio e mais 2 para guarda o estado anterior
+dispositivos acelerometro, old_ace;
+dispositivos giroscopio;
+
 /*
   FUNÇOES
 */
+
+
+/*
+  Publoca o status se estiver no horario definido, a mensagem enviada no mqtt é no topico "Status", e a mensagem consiste me "estado":{"ok"/"alarme},"tempo":{tempo em segundos que a placa espera para publica uma mensagem},
+    "modo":{1 se o modo de operação for alrme e 0 se detecção de aciedente}, "should_update":{1 se o site deve atualizar os valores salvos no banco de dados e 0 se nao}
+*/
+void publish_status(){
+  if (now > wait_time + last_mensage_time) {// caso esteja na hora de manda a mensagem pra confirma que a placa esta conectada
+    Serial.println("publicando estatus");
+    DynamicJsonDocument doc(1024);
+    doc["estado"] = problema == ""? "ok":"alarme";
+    doc["tempo"] = wait_time;
+    doc["modo"] = stat_is_alarm;
+    doc["should_update"] = should_update;
+    char msg[1024];
+    serializeJson(doc, msg);
+    MQTT.publish("Status", msg);
+    if ( problema != "") {// se algum problema foi detectad é escrito no arquivo
+      escreve_no_arquivo(arquivo, problema);
+    }
+    last_mensage_time = now;
+  }
+  now = tempo_obj.getEpochTime();// verificamos em qual instante estamos
+}
 
 /*
   Esta função é responsavel por publica o porblema pro broker
@@ -69,11 +97,16 @@ void problema_confirmado() {
   }
   Serial.print("ligando para :");
   Serial.println(numero);
-  unsigned int now = tempo_obj.getEpochTime();
+  now = tempo_obj.getEpochTime();
   last_mensage_time = now;
 }
 
-bool should_update = false;
+void verify_update(bool is_not_site){
+  if(is_not_site){
+    last_mensage_time = tempo_obj.getEpochTime() - wait_time+1;
+  }
+  should_update =is_not_site;
+}
 
 /*
   Função que muda o estado de funcionamento da placa
@@ -86,7 +119,7 @@ void change_state(bool new_state, bool is_not_site) {
   new_state ? MQTT.publish("state", "{\"modo\":1}") : MQTT.publish("state", "{\"modo\":0}");
   delay(100);
   stat_is_alarm = new_state;
-  should_update = !is_not_site;
+  verify_update(is_not_site);
 }
 
 /*
@@ -98,7 +131,7 @@ void set_wait_time(unsigned int tempo, bool is_not_site) {
   wait_time = tempo > 1 ? tempo - 1 : 1;
   //Serial.println(tempo);
   //    wait_time = tempo;
-  should_update = !is_not_site;
+  verify_update(is_not_site);
 }
 /*
   Função que recebe a mensagem do MQTT e chama os devidos procedimentos para serem executados
@@ -269,7 +302,7 @@ void setup() {
   //  delay(1000000);
   //  Serial.println(tempo_obj.getFormattedTime());
   MQTT.publish("inicia", "{}");
-  MQTT.publish("Status", "{\"estado\":\"ok\"}");
+  publish_status();
   digitalWrite(LED_BUILTIN, HIGH);
 }
 int mensagem_tipo = 0, i = 0;
@@ -299,28 +332,6 @@ void escreve_no_arquivo( bool arquivo, String text) {
 
 bool day_change = false;
 
-/*
-  Publoca o status se estiver no horario definido, a mensagem enviada no mqtt é no topico "Status", e a mensagem consiste me "estado":{"ok"/"alarme},"tempo":{tempo em segundos que a placa espera para publica uma mensagem},
-    "modo":{1 se o modo de operação for alrme e 0 se detecção de aciedente}, "should_update":{1 se o site deve atualizar os valores salvos no banco de dados e 0 se nao}
-*/
-void publish_status(){
-  unsigned long now = tempo_obj.getEpochTime();// verificamos em qual instante estamos
-  if (now > wait_time + last_mensage_time) {// caso esteja na hora de manda a mensagem pra confirma que a placa esta conectada
-    Serial.println("publicando estatus");
-    DynamicJsonDocument doc(1024);
-    doc["estado"] = problema == ""? "ok":"alarme";
-    doc["tempo"] = wait_time;
-    doc["modo"] = stat_is_alarm;
-    doc["should_update"] = should_update;
-    char msg[1024];
-    serializeJson(doc, msg);
-    MQTT.publish("Status", msg);
-    if ( problema != "") {// se algum problema foi detectad é escrito no arquivo
-      escreve_no_arquivo(arquivo, problema);
-    }
-    last_mensage_time = now;
-  }
-}
 
 /**
   É uma função padrao do arduino e sera executada infinitamente apos o setup até o despositivo ser desligado
@@ -377,7 +388,6 @@ void loop() {
     }
     i++;
   }
-  unsigned long now = tempo_obj.getEpochTime();// verificamos em qual instante estamos
   was_save = was_button_pushed;
   was_button_pushed = digitalRead(0) == 0 ? true : false;
   if (stat_is_alarm) {// se estivermos no modo de alarme verificamos se os valores do estado antigo é igual ao do novo estado lido
@@ -440,7 +450,6 @@ void loop() {
       }
       was_save = was_button_pushed;
       was_button_pushed = digitalRead(0) == 0 ? true : false;
-      now = tempo_obj.getEpochTime();
       publish_status();
 /*    if (now > wait_time + last_mensage_time) {// se em quanto esperamos o tempo do usuario aperta o botao for nescessario envia uma mensagem essa parte fara isso
         MQTT.publish("Status", "{\"estado\":\"alarme\"}");
