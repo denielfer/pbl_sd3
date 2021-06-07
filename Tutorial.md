@@ -7,11 +7,11 @@
 
 ##2. Acesso ao sistema
 - Para acessar o site, digite a seguinte URL em seu navegador: {{ IPv4 }} ;
-- Deverá aparecer a seguinte tela.
+- Deverá aparecer a seguinte tela.<br>
 ![Alt Text](img/Inicial.png)
 
 ##3. Interface
-- No botão Switch podemos mudar o modo de operação do dispositivo, alternando entre 'Detector de colisão' ou 'Alarme' de maneira fácil;
+- No botão Switch podemos mudar o modo de operação do dispositivo, alternando entre 'Detector de colisão' ou 'Alarme' de maneira fácil;<br>
 ![Alt Text](img/Switch.png)
 
 ##4. Estado do dispositivo
@@ -24,5 +24,5 @@
 ![Alt Text](img/Indisponivel.png)
 
 ##5. Configurar tempo de notificação
-- No fim da interface, temos a opção de configurar o tempo de espera que o dispositivo fica publicando as informações atuais para o sistema.
+- No fim da interface, temos a opção de configurar o tempo de espera que o dispositivo fica publicando as informações atuais para o sistema.<br>
 ![Alt Text](img/Tempo.png)
