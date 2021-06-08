@@ -65,7 +65,7 @@ dispositivos giroscopio;
 void publish_status(bool force_msg) {
   now = tempo_obj.getEpochTime();// verificamos em qual instante estamos
   if (now > (wait_time + last_mensage_time) || force_msg ){// caso esteja na hora de manda a mensagem pra confirma que a placa esta conectada
-    Serial.println("publicando estatus");
+    Serial.println("publicando status");
     DynamicJsonDocument doc(1024);
     doc["estado"] = problema == "" ? "ok" : "alarme";
     doc["tempo"] = wait_time;
@@ -202,7 +202,7 @@ void le_arquivo_full(String nome) {
     String retorno = f.readStringUntil('\n');
     Serial.println(retorno);
   }
-  Serial.print("Fim do conteudo do arquico: ");
+  Serial.print("Fim do conteudo do arquivo: ");
   Serial.println(nome);
   f.close();
 }
@@ -233,7 +233,7 @@ void setup() {
   espClient.loadPrivateKey(private_key) ? Serial.println("Chave privada carregada com sucesso") : Serial.println("Chave privada não carregada");
 
   File ca = SPIFFS.open("/ca.der", "r");
-  ca ? Serial.println("AWS CA aberto com sucesso") : Serial.println("AWS CA não foi abertoaberto");
+  ca ? Serial.println("AWS CA aberto com sucesso") : Serial.println("AWS CA não foi aberto");
   espClient.loadCACert(ca) ? Serial.println("AWS CA caregado") : Serial.println("AWS CA não carregado");
 
   // caregamos do arquivo sys.txt qual arquivo deve ser aberto
@@ -260,7 +260,7 @@ void setup() {
   le_arquivo_full("arquivo1.txt");
   le_arquivo_full("arquivo2.txt");
   Serial.println("");
-  Serial.print("Escrevendo encima do arquivo : ");
+  Serial.print("Sobrescrevendo o arquivo : ");
   Serial.println(arquivo ? "arquivo1.txt" : "arquivo2.txt");
   File file;
   // limpamos o arquivo que sera escrito
@@ -436,10 +436,10 @@ void loop() {
       delay(100);
       //se o botao for apertado quebramos o loop e mudamos a flag do alarme pra falso assim pulando o envio do pedido de socorro
       if ( was_button_pushed && !was_save) {
-        Serial.println("botao precionado");
+        Serial.println("botao pressionado");
         problema = "";
         publish_status(true);
-        escreve_no_arquivo(arquivo, "botao precionado");
+        escreve_no_arquivo(arquivo, "botao pressionado");
         alarm_on = false;
         break;
       }
@@ -454,7 +454,7 @@ void loop() {
     }
     if (alarm_on) {// quando o loop acaba se o usuario nao apertou o botao a flag ainda é true entao "fazemos" a ligação
       Serial.println("Problema confirmado/ botao nao apertado");
-      escreve_no_arquivo(arquivo, "botao nao precionado precionado, Problema detectado!!!");
+      escreve_no_arquivo(arquivo, "botao nao precionado pressionado, Problema detectado!!!");
       problema_confirmado(); // para publicar problema e salver no historico de eventos
       alarm_on = false;
       // para indicar a ligação
