@@ -8,6 +8,27 @@ from datetime import timedelta
 from django.views.decorators.csrf import csrf_exempt
 from . import analista
 
+
+# import psycopg2
+
+# conn = psycopg2.connect(
+#             host="database-3.ckpzpfrz5rnt.us-east-1.rds.amazonaws.com",
+#             database="DB1",
+#             user="dfc152",
+#             password="senha123")
+# cur = conn.cursor()
+# cur.execute("UPDATE monitorador_dados set state = True where ID = 1")
+# cur = conn.cursor()
+# cur.execute("""SELECT * from monitorador_dados""")
+# cur = cur.fetchall()
+# cur = cur[0]
+# a = cur[1]
+# b = cur[2]
+# c = cur[3]
+# conn.commit()
+#
+#print(f"datetime: {a}\t tempo espera:{b},\t is_alarme:{c}")
+
 def tela(request):
     a,b = get_dados()
     ts,s = a.tempo_de_espera,b.status
@@ -33,7 +54,7 @@ def set_tempo(request):
         t = int(t[0:2])*3600+int(t[3:5])*60+int(t[6:8])
         a.tempo_de_espera = t
         a.save()
-        m = {"timer":t}
+        m = {"timer":t,"is_not_site":0}
         MQTT.publish("set_timer",m)
         #print(m)
     return redirect('monitorador:tela_inicial')
@@ -63,6 +84,6 @@ def mudar_modo(request):
         #print(state)
 #        a.state = state
 #        a.save()
-        m = { "estado":1 if(state) else 0 }
+        m = { "estado":1 if(state) else 0,"is_not_site":0}
         MQTT.publish("set_state",m)
     return redirect('monitorador:tela_inicial')
