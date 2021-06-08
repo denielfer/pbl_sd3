@@ -105,6 +105,7 @@ void verify_update(bool is_not_site){
   if(is_not_site){
     last_mensage_time = tempo_obj.getEpochTime() - wait_time+1;
   }
+  //delay(1000);
   should_update =is_not_site;
 }
 
@@ -117,7 +118,7 @@ void change_state(bool new_state, bool is_not_site) {
   String s = new_state ? "alarme" : "Detector de acidente";
   Serial.println(s);
   new_state ? MQTT.publish("state", "{\"modo\":1}") : MQTT.publish("state", "{\"modo\":0}");
-  delay(100);
+  //delay(100);
   stat_is_alarm = new_state;
   verify_update(is_not_site);
 }
