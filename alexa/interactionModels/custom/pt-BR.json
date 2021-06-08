@@ -1,7 +1,7 @@
 {
   "interactionModel": {
     "languageModel": {
-      "invocationName": "iniciar monitoramento do sensor",
+      "invocationName": "as as",
       "intents": [
         {
           "name": "AMAZON.CancelIntent",
@@ -32,19 +32,6 @@
         {
           "name": "AMAZON.NavigateHomeIntent",
           "samples": []
-        },
-        {
-          "name": "HelloWorldIntent",
-          "slots": [],
-          "samples": [
-            "olá",
-            "como vai você",
-            "diga oi mundo",
-            "diga oi",
-            "oi",
-            "diga olá mundo",
-            "diga olá"
-          ]
         },
         {
           "name": "AMAZON.FallbackIntent",
@@ -84,10 +71,36 @@
             "definir tempo de espera para {tempo}",
             "alexa definir tempo de espera para {tempo}"
           ]
+        },
+        {
+          "name": "ligar_alarme_Intent",
+          "slots": [],
+          "samples": [
+            "alexa desativar detector de acidentes",
+            "desativar detector de acidentes",
+            "alexa desligar detector de acidentes",
+            "desligar detector de acidentes",
+            "iniciar alarme",
+            "alexa ligar alarme",
+            "ligar alarme"
+          ]
+        },
+        {
+          "name": "desligar_alarme_Intent",
+          "slots": [],
+          "samples": [
+            "ligar detector de acidentes",
+            "alexa ligar detector de acidentes",
+            "alexa liga detector de acidentes",
+            "liga detector de acidentes",
+            "desativar alarme",
+            "alexa desligar alarme",
+            "desligar alarme"
+          ]
         }
       ],
       "types": []
     }
   },
-  "version": "3"
+  "version": "7"
 }

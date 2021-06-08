@@ -60,12 +60,14 @@ dispositivos giroscopio;
 /*
   Publoca o status se estiver no horario definido, a mensagem enviada no mqtt é no topico "Status", e a mensagem consiste me "estado":{"ok"/"alarme},"tempo":{tempo em segundos que a placa espera para publica uma mensagem},
     "modo":{1 se o modo de operação for alrme e 0 se detecção de aciedente}, "should_update":{1 se o site deve atualizar os valores salvos no banco de dados e 0 se nao}
+  @param force_msg, do tipo bool, quando verdade força o envio da mensagem independente do tempo, quando false so é enviado se estiver no tempo de enviar a mensagem com base no tempo de tolerancia
 */
-void publish_status(){
-  if (now > wait_time + last_mensage_time) {// caso esteja na hora de manda a mensagem pra confirma que a placa esta conectada
+void publish_status(bool force_msg) {
+  now = tempo_obj.getEpochTime();// verificamos em qual instante estamos
+  if (now > (wait_time + last_mensage_time) || force_msg ){// caso esteja na hora de manda a mensagem pra confirma que a placa esta conectada
     Serial.println("publicando estatus");
     DynamicJsonDocument doc(1024);
-    doc["estado"] = problema == ""? "ok":"alarme";
+    doc["estado"] = problema == "" ? "ok" : "alarme";
     doc["tempo"] = wait_time;
     doc["modo"] = stat_is_alarm;
     doc["should_update"] = should_update;
@@ -84,29 +86,19 @@ void publish_status(){
   Esta função é responsavel por publica o porblema pro broker
 */
 void problema_confirmado() {
-  if (stat_is_alarm) {
-    MQTT.publish("Status", "{\"estado\":\"Roubo\"}");
-  } else if (problema != "") {
-    String m = "{\"estado\":\"" + problema + "\"}";
-    char s[100];
-    m.toCharArray(s, 100);
-    Serial.println(s);
-    MQTT.publish("Status", s);
-  } else {
-    MQTT.publish("Status", "{\"estado\":\"Problema não identificado\"}");
-  }
+  publish_status(true);
   Serial.print("ligando para :");
   Serial.println(numero);
   now = tempo_obj.getEpochTime();
   last_mensage_time = now;
 }
 
-void verify_update(bool is_not_site){
-  if(is_not_site){
-    last_mensage_time = tempo_obj.getEpochTime() - wait_time+1;
+void verify_update(bool is_not_site) {
+  if (is_not_site) {
+    last_mensage_time = tempo_obj.getEpochTime() - wait_time + 2;
   }
   //delay(1000);
-  should_update =is_not_site;
+  should_update = is_not_site;
 }
 
 /*
@@ -128,10 +120,7 @@ void change_state(bool new_state, bool is_not_site) {
   @param tempo, unsigned int, salva o tempo que deve ser esperado entre as mensagens
 */
 void set_wait_time(unsigned int tempo, bool is_not_site) {
-  //Serial.println("tempo configurado");
   wait_time = tempo > 1 ? tempo - 1 : 1;
-  //Serial.println(tempo);
-  //    wait_time = tempo;
   verify_update(is_not_site);
 }
 /*
@@ -149,9 +138,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
   serializeJson(doc, Serial);
   Serial.println();
   if ( strcmp(topic, "set_timer") == 0 ) {
-    set_wait_time(doc["timer"], doc["is_not_site"]==1);
+    set_wait_time(doc["timer"], doc["is_not_site"] == 1);
   } else if (strcmp(topic, "set_state") == 0) {
-    change_state(doc["estado"] == 1, doc["is_not_site"]==1);
+    change_state(doc["estado"] == 1, doc["is_not_site"] == 1);
   }
 }
 /**
@@ -191,7 +180,6 @@ void conectar_mqtt() {
       //se inscrevendo nos topicos que serao constantemente ouvidos pela placa
       MQTT.subscribe("set_timer");
       MQTT.subscribe("set_state");
-      MQTT.subscribe("set_timer_alexa");
     } else {
       Serial.print("Nao conectado, rc=");
       Serial.print(MQTT.state());
@@ -303,7 +291,7 @@ void setup() {
   //  delay(1000000);
   //  Serial.println(tempo_obj.getFormattedTime());
   MQTT.publish("inicia", "{}");
-  publish_status();
+  publish_status(true);
   digitalWrite(LED_BUILTIN, HIGH);
 }
 int mensagem_tipo = 0, i = 0;
@@ -338,6 +326,12 @@ bool day_change = false;
   É uma função padrao do arduino e sera executada infinitamente apos o setup até o despositivo ser desligado
 **/
 void loop() {
+  /*Serial.print("now:");
+  Serial.print(now);
+  Serial.print("\ttempo de tolerancia:");
+  Serial.print(wait_time);
+  Serial.print("\t tempo da ultima mensagem:");
+  Serial.println(last_mensage_time);*/
   // se nao estiver conectado a amazon conecte
   if (!MQTT.connected()) {
     conectar_mqtt();
@@ -428,7 +422,7 @@ void loop() {
   // Se o alarme tiver sido ligado por alguma situação detectada nos sensores
   if (alarm_on) { // se o alarme estiver ligado
     Serial.println("Alarme ligado");
-    MQTT.publish("Status", "{\"estado\":\"alarme\"}"); // publicamos alarme ligado
+    publish_status(true);
     escreve_no_arquivo(arquivo, "alarme ligado por : " + problema);
     unsigned long espera = now + 60;// definimos o tempo defaut de espera de 60 segundos para o usuario aperta o botao
     while ( now < espera ) {// emquanto esperamos caso se desconecte do broker do MQTT vamos reconectar
@@ -443,20 +437,20 @@ void loop() {
       //se o botao for apertado quebramos o loop e mudamos a flag do alarme pra falso assim pulando o envio do pedido de socorro
       if ( was_button_pushed && !was_save) {
         Serial.println("botao precionado");
-        MQTT.publish("Status", "{\"estado\":\"ok\"}");// publicamos que esta tudo ok
+        problema = "";
+        publish_status(true);
         escreve_no_arquivo(arquivo, "botao precionado");
-        last_mensage_time = now;
         alarm_on = false;
         break;
       }
       was_save = was_button_pushed;
       was_button_pushed = digitalRead(0) == 0 ? true : false;
-      publish_status();
-/*    if (now > wait_time + last_mensage_time) {// se em quanto esperamos o tempo do usuario aperta o botao for nescessario envia uma mensagem essa parte fara isso
-        MQTT.publish("Status", "{\"estado\":\"alarme\"}");
-        last_mensage_time = now;
-        Serial.println("publicando alarme ligado");
-      }*/
+      publish_status(false);
+      /*    if (now > wait_time + last_mensage_time) {// se em quanto esperamos o tempo do usuario aperta o botao for nescessario envia uma mensagem essa parte fara isso
+              MQTT.publish("Status", "{\"estado\":\"alarme\"}");
+              last_mensage_time = now;
+              Serial.println("publicando alarme ligado");
+            }*/
     }
     if (alarm_on) {// quando o loop acaba se o usuario nao apertou o botao a flag ainda é true entao "fazemos" a ligação
       Serial.println("Problema confirmado/ botao nao apertado");
@@ -469,7 +463,7 @@ void loop() {
       digitalWrite(LED_BUILTIN, HIGH);
     }
   }
-  publish_status();
+  publish_status(false);
   /*if (now > wait_time + last_mensage_time) {// caso esteja na hora de manda a mensagem pra confirma que a placa esta conectada
     Serial.println("publicando estatus");
     DynamicJsonDocument doc(1024);
@@ -484,7 +478,7 @@ void loop() {
       escreve_no_arquivo(arquivo, problema);
     }
     last_mensage_time = now;
-  }*/
+    }*/
   if ( tempo_obj.getFormattedTime() == "00:00:00" && day_change ) {
     arquivo = !arquivo;
     day_change = !day_change;
