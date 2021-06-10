@@ -296,4 +296,13 @@ def iniciar():
                                 "{ Nome do arquivo contendo o certificado }")
 ```
 
-e entao clicamos em deploy no canto superior direito. Assim essa skill esta vinculada a nossa conta da amazon usada no alexa developer console e podemos acessa ela em dispositivos logados com essa conta.
+e no arquivo "lambda_function.py" altere o ipv4, conforme:
+
+```
+logger.setLevel(logging.INFO)
+
+ipv4 = "{Endereço do site (ex: HTTP://{ipv4}) }"
+status = "Desconectado"
+```
+
+e entao clicamos em deploy no canto superior direito. Assim essa skill esta vinculada a nossa conta da amazon usada no alexa developer console e podemos acessa ela em dispositivos logados com essa conta, sendo nescessario ativar nos dispositivos.
