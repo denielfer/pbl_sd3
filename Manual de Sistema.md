@@ -253,7 +253,7 @@ sudo python3 manage.py runserver 0.0.0.0:80
 Assim abrimos o servidor na porta :80 da máquina aberta para qualquer um acessar.
 Então basta colocar o IPv4 da máquina do seu navegador e estará acessando o site, garanta que está acessando a porta 80 digitando: "HTTP://{IPv4}".
 
-![Alt Text](img/Site.png)
+![Alt Text](img/Inicial.png)
 
 #configurando alexa
 
