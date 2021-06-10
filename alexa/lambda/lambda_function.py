@@ -48,14 +48,17 @@ class LaunchRequestHandler(AbstractRequestHandler):
         # type: (HandlerInput) -> Response
                 
         MQTT.iniciar()
-        r = requests.get(f'{ipv4}/get_update/', timeout=1)
-        if(r.status_code == 200):
-            r = r.json()
-            status = "Conectado" if(r["status"] == "ok") else "Alarme ligado" if(r["status"] == "alarme")  else "Desconectado"
-            state  = "Alarme" if (r["state"]) else "Detector de acidentes"
-        else:
-            status = "Desconectado"
-            state = "desconhecido"
+        try:
+            r = requests.get(f'{ipv4}/get_update/', timeout=1)
+            if(r.status_code == 200):
+                r = r.json()
+                status = "Conectado" if(r["status"] == "ok") else "Alarme ligado" if(r["status"] == "alarme")  else "Desconectado"
+                state  = "Alarme" if (r["state"]) else "Detector de acidentes"
+            else:
+                status = "Desconectado"
+                state = "desconhecido"
+        except:
+            pass
         speak_output = f"Bem vindo, aqui você consegue informações sobre o dispositivo. Fale 'alexa me ajude' para mais informações."
 
         return (
@@ -73,7 +76,7 @@ class HelpIntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speak_output = "Olá, para ligar ou desligar o alarme simplesmente diga 'ligar/disligar' alarme, para requisitar informações sobre o estado do dispositivo diga 'informações sobre dispositivo', ou para definir o tempo de espera do dispositivo diga 'definir tempo de espera para x' sendo x o tempo em minutos. Lembre que esse tempo deve ser em minutos, e devwe ser igual ou maior que 1. Para finalizar diga 'adeus'. Então em que posso te ajudar?"
+        speak_output = "Olá, para ligar ou desligar o alarme simplesmente diga 'ligar/disligar' alarme, para requisitar informações sobre o estado do dispositivo diga 'informações sobre dispositivo', ou para definir o tempo de espera do dispositivo diga 'definir tempo de espera para x' sendo x o tempo em minutos. Lembre que esse tempo deve ser em minutos, e deve ser igual ou maior que 1. Para finalizar diga 'adeus'. Então em que posso te ajudar?"
         r2 = "posso ajudar em mais alguma coisa?"
         return (
             handler_input.response_builder
@@ -172,14 +175,17 @@ class set_time_IntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         MQTT.conectar()
-        r = requests.get(f'{ipv4}/get_update/', timeout=1)
-        if(r.status_code == 200):
-            r = r.json()
-            status = "Conectado" if(r["status"] == "ok") else "Alarme ligado" if(r["status"] == "alarme")  else "Desconectado"
-            state  = "Alarme" if (r["state"]) else "Detector de acidentes"
-        else:
-            status = "Desconectado"
-            state = "desconhecido"
+        try:
+            r = requests.get(f'{ipv4}/get_update/', timeout=1)
+            if(r.status_code == 200):
+                r = r.json()
+                status = "Conectado" if(r["status"] == "ok") else "Alarme ligado" if(r["status"] == "alarme")  else "Desconectado"
+                state  = "Alarme" if (r["state"]) else "Detector de acidentes"
+            else:
+                status = "Desconectado"
+                state = "desconhecido"
+        except:
+            pass
         if(status == "Desconectado"):
             speak_output = "Operação não pode ser realizada pois não foi possivel se conectar com a placa. Verifique se o dispositvo esta conectado antes de tenta novamente"
         else:
@@ -191,7 +197,7 @@ class set_time_IntentHandler(AbstractRequestHandler):
                 if(tempo < 1):
                     speak_output = f"O tempo informado deve ser maior que 1 e um número inteiro. Por favor tente novamente"
                 else:
-                    speak_output = f"O tempo de tolerância da conexao foi definido para {tempo} minutos. Algo mais?"
+                    speak_output = f"O tempo de tolerância da conexão foi definido para {tempo} minutos. Algo mais?"
                     MQTT.publish("set_timer",{"timer":tempo*60,"is_not_site":1})
         return ( handler_input.response_builder.speak(speak_output).ask(speak_output).response )
 
@@ -201,14 +207,17 @@ class get_status_IntentHandler(AbstractRequestHandler):
         return ask_utils.is_intent_name("get_status_Intent")(handler_input)
 
     def handle(self, handler_input):
-        r = requests.get(f'{ipv4}/get_update/', timeout=1)
-        if(r.status_code == 200):
-            r = r.json()
-            status = "Conectado" if(r["status"] == "ok") else "Alarme ligado" if(r["status"] == "alarme")  else "Desconectado"
-            state  = "Alarme" if (r["state"]) else "Detector de acidentes"
-        else:
-            status = "Desconectado"
-            state = "desconhecido"
+        try:
+            r = requests.get(f'{ipv4}/get_update/', timeout=1)
+            if(r.status_code == 200):
+                r = r.json()
+                status = "Conectado" if(r["status"] == "ok") else "Alarme ligado" if(r["status"] == "alarme")  else "Desconectado"
+                state  = "Alarme" if (r["state"]) else "Detector de acidentes"
+            else:
+                status = "Desconectado"
+                state = "desconhecido"
+        except:
+            pass
         if(status == "Desconectado"):
             speak_output = "Operação não pode ser realizada pois não foi possivel se conectar com a placa. Verifique se o dispositvo esta conectado antes de tenta novamente"
         else:
@@ -227,14 +236,17 @@ class set_state_IntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         MQTT.conectar()
-        r = requests.get(f'{ipv4}/get_update/', timeout=1)
-        if(r.status_code == 200):
-            r = r.json()
-            status = "Conectado" if(r["status"] == "ok") else "Alarme ligado" if(r["status"] == "alarme")  else "Desconectado"
-            state  = "Alarme" if (r["state"]) else "Detector de acidentes"
-        else:
-            status = "Desconectado"
-            state = "desconhecido"
+        try:
+            r = requests.get(f'{ipv4}/get_update/', timeout=1)
+            if(r.status_code == 200):
+                r = r.json()
+                status = "Conectado" if(r["status"] == "ok") else "Alarme ligado" if(r["status"] == "alarme")  else "Desconectado"
+                state  = "Alarme" if (r["state"]) else "Detector de acidentes"
+            else:
+                status = "Desconectado"
+                state = "desconhecido"
+        except:
+            pass
         if(status == "Desconectado"):
             speak_output = "Operação não pode ser realizada pois não foi possivel se conectar com a placa. Verifique se o dispositvo esta conectado antes de tenta novamente"
         else:
@@ -255,14 +267,17 @@ class ligar_alarme_IntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         MQTT.conectar()
-        r = requests.get(f'{ipv4}/get_update/', timeout=1)
-        if(r.status_code == 200):
-            r = r.json()
-            status = "Conectado" if(r["status"] == "ok") else "Alarme ligado" if(r["status"] == "alarme")  else "Desconectado"
-            state  = "Alarme" if (r["state"]) else "Detector de acidentes"
-        else:
-            status = "Desconectado"
-            state = "desconhecido"
+        try:
+            r = requests.get(f'{ipv4}/get_update/', timeout=1)
+            if(r.status_code == 200):
+                r = r.json()
+                status = "Conectado" if(r["status"] == "ok") else "Alarme ligado" if(r["status"] == "alarme")  else "Desconectado"
+                state  = "Alarme" if (r["state"]) else "Detector de acidentes"
+            else:
+                status = "Desconectado"
+                state = "desconhecido"
+        except:
+            pass
         if(status == "Desconectado"):
             speak_output = "Operação não pode ser realizada pois não foi possivel se conectar com a placa. Verifique se o dispositvo esta conectado antes de tenta novamente"
         else:
@@ -282,14 +297,17 @@ class desligar_alarme_IntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         MQTT.conectar()
-        r = requests.get(f'{ipv4}/get_update/', timeout=1)
-        if(r.status_code == 200):
-            r = r.json()
-            status = "Conectado" if(r["status"] == "ok") else "Alarme ligado" if(r["status"] == "alarme")  else "Desconectado"
-            state  = "Alarme" if (r["state"]) else "Detector de acidentes"
-        else:
-            status = "Desconectado"
-            state = "desconhecido"
+        try:
+            r = requests.get(f'{ipv4}/get_update/', timeout=1)
+            if(r.status_code == 200):
+                r = r.json()
+                status = "Conectado" if(r["status"] == "ok") else "Alarme ligado" if(r["status"] == "alarme")  else "Desconectado"
+                state  = "Alarme" if (r["state"]) else "Detector de acidentes"
+            else:
+                status = "Desconectado"
+                state = "desconhecido"
+        except:
+            pass
         if(status == "Desconectado"):
             speak_output = "Operação não pode ser realizada pois não foi possivel se conectar com a placa. Verifique se o dispositvo esta conectado antes de tenta novamente"
         else:
