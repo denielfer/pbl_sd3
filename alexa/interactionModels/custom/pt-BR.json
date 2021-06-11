@@ -1,7 +1,7 @@
 {
   "interactionModel": {
     "languageModel": {
-      "invocationName": "inicia monitorador",
+      "invocationName": "import python",
       "intents": [
         {
           "name": "AMAZON.CancelIntent",
